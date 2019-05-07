@@ -38,7 +38,7 @@ public class Tiles {
 					Tile tile;
 					if(splitLine.length >= 4) {
 						tile = new Tile(tileName, spriteSheet.getSprite(spriteX, spriteY), Integer.parseInt(splitLine[3].trim()));
-						System.out.println(tileName + ", " + Integer.parseInt(splitLine[3].trim()));
+						//System.out.println(tileName + ", " + Integer.parseInt(splitLine[3].trim()));
 					}
 					else {
 						tile = new Tile(tileName, spriteSheet.getSprite(spriteX, spriteY));
