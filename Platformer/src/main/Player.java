@@ -29,7 +29,8 @@ public class Player implements GameObject {
 	private int speed = 7;
 	private int jumpSpeed = 20;
 	private Vector2 velocity = new Vector2();
-	private float gravity = 0.5f;
+	private final float GRAVITY = 0.5f;
+	private final float TERMINAL_VELOCITY = 10;
 
 	public Player(Sprite sprite, File playerFile, int xZoom, int yZoom) {
 
@@ -201,7 +202,9 @@ public class Player implements GameObject {
 
 		// If in the air
 		if(hitbox.y < yMin || hitbox.y > yMin) {
-			velocity.y += gravity;
+			if(velocity.y < TERMINAL_VELOCITY)
+				velocity.y += GRAVITY;
+			
 			onGround = false;
 		}
 		// If on the ground
@@ -217,8 +220,7 @@ public class Player implements GameObject {
 		}
 
 
-		if(velocity.y > 8)
-			velocity.y = 8;
+
 
 
 		// Read key inputs
