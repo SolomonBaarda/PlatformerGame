@@ -6,14 +6,15 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Random;
 import java.util.Scanner;
 
 public class Map {
 
 	private File mapFile;
 	private Tiles tileSet;
-	private Sprite background;
-	private Sprite blockBackground;
+	private Sprite blockBackgroundSky;
+	private Sprite blockBackgroundGround;
 
 	private ArrayList<MappedTile> mappedTiles; 
 	private Block[][] blocks;
@@ -32,36 +33,43 @@ public class Map {
 	private final int blockPixelHeight = blockHeight * tileHeight;
 
 	public int numLayers = 3;
-	
+
 	private int mapWidth, mapHeight;
+	private int mapWidthBlocks, mapHeightBlocks;
+
+	private int seed;
+	private boolean generated;
 
 	private HashMap<Integer, String> comments;
 
-	public Map(File mapFile, Tiles tileSet, Sprite background, Sprite blockBackground, int mapWidthBlocks, int mapHeightBlocks, int xZoom, int yZoom) {
+	/**
+	 * @param mapFile
+	 * @param tileSet
+	 * @param blockBackgroundSky
+	 * @param blockBackgroundGround
+	 * @param mapWidthBlocks
+	 * @param mapHeightBlocks
+	 * @param xZoom
+	 * @param yZoom
+	 */
+	public Map(File mapFile, Tiles tileSet, Sprite blockBackgroundSky, Sprite blockBackgroundGround, int mapWidthBlocks, int mapHeightBlocks, int xZoom, int yZoom) {
 		this.mapFile = mapFile;
 		this.tileSet = tileSet;
-		this.background = background;
-		this.blockBackground = blockBackground;
+		this.blockBackgroundSky = blockBackgroundSky;
+		this.blockBackgroundGround = blockBackgroundGround;
 		this.xZoom = xZoom;
 		this.yZoom = yZoom;
-		
+
+		this.mapWidthBlocks = mapWidthBlocks;
+		this.mapHeightBlocks = mapHeightBlocks;
 		this.mapWidth = mapWidthBlocks * blockPixelWidth;
 		this.mapHeight = mapHeightBlocks * blockPixelHeight;
-		
+
 		int minX = Integer.MAX_VALUE;
 		int minY = Integer.MAX_VALUE;
 		int maxX = Integer.MIN_VALUE;
 		int maxY = Integer.MIN_VALUE;
 
-		if(!mapFile.exists()) {
-			try {
-				mapFile.createNewFile();
-
-			} catch (IOException e) {
-
-				e.printStackTrace();
-			}
-		}
 
 		try {
 			Scanner s = new Scanner(mapFile);
@@ -78,35 +86,41 @@ public class Map {
 				// not comments 
 				if(!line.startsWith("//")) {
 
-					String[] splitLine = line.split(",");
-					if(splitLine.length == 5) {
-						MappedTile mappedTile = new MappedTile(
-								// Layer
-								Integer.parseInt(splitLine[0].trim()), 
-								// Rotation
-								Integer.parseInt(splitLine[1].trim()), 
-								// TileID
-								Integer.parseInt(splitLine[2].trim()),
-								// x position
-								Integer.parseInt(splitLine[3].trim()),
-								// y position
-								Integer.parseInt(splitLine[4].trim()) );
+					if(!line.startsWith("SEED")) {
+						String[] splitLine = line.split(",");
+						if(splitLine.length == 5) {
+							MappedTile mappedTile = new MappedTile(
+									// Layer
+									Integer.parseInt(splitLine[0].trim()), 
+									// Rotation
+									Integer.parseInt(splitLine[1].trim()), 
+									// TileID
+									Integer.parseInt(splitLine[2].trim()),
+									// x position
+									Integer.parseInt(splitLine[3].trim()),
+									// y position
+									Integer.parseInt(splitLine[4].trim()) );
 
-						if(mappedTile.getX() < minX)
-							minX = mappedTile.getX();
-						if(mappedTile.getY() < minY)
-							minY = mappedTile.getY();
-						if(mappedTile.getX() > maxX)
-							maxX = mappedTile.getX();
-						if(mappedTile.getY() > maxY)
-							maxY = mappedTile.getY();
+							if(mappedTile.getX() < minX)
+								minX = mappedTile.getX();
+							if(mappedTile.getY() < minY)
+								minY = mappedTile.getY();
+							if(mappedTile.getX() > maxX)
+								maxX = mappedTile.getX();
+							if(mappedTile.getY() > maxY)
+								maxY = mappedTile.getY();
 
-						if(numLayers <= mappedTile.layer)
-							numLayers = mappedTile.layer + 1;
+							if(numLayers <= mappedTile.layer)
+								numLayers = mappedTile.layer + 1;
 
-						mappedTiles.add(mappedTile);
+							mappedTiles.add(mappedTile);
+						}
 					}
-
+					else if(line.startsWith("SEED")){
+						String[] seed = line.split(":");
+						this.seed = Integer.parseInt(seed[1]);
+						comments.put(0, "SEED:" +seed);
+					}
 
 				}
 				// do comments 
@@ -115,6 +129,7 @@ public class Map {
 				}
 
 				currentLine++;
+
 			}
 			s.close();
 
@@ -149,58 +164,101 @@ public class Map {
 
 			System.out.println(mapFile+ " loaded successfully!");
 
+
+			if(mappedTiles.isEmpty()) {
+				System.out.println("World is empty. Generating world!");
+				
+				if(seed == 0) {
+					seed = (new Random()).nextInt();
+				}
+				
+				generateWorld(mapWidthBlocks, mapHeightBlocks, seed);
+				saveMap();
+			}
+
+
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
+			System.out.println("Map failed to load!");
 		}
+
+
 	}
 
 
 	public void render(RenderHandler renderer, GameObject[] objects, int xZoom, int yZoom) {
 		// Render background
 		Rectangle camera = renderer.getCamera();
-		
-		
-		// make each block render background piece 
-		renderer.renderSprite(background, 0,0, 0, 1, 1, true, camera.getX(), camera.getY(), camera.getWidth(), camera.getHeight() );
+		Sprite block;
+
+		int topLeftX = camera.x/blockPixelWidth;
+		int topLeftY = camera.y/blockPixelHeight;
+		int bottomRightX = (camera.x + camera.width)/blockPixelWidth + 1;
+		int bottomRightY = (camera.y + camera.height)/blockPixelHeight + 1;
+
+		for(int blockY = topLeftY; blockY < bottomRightY; blockY++) {
+			for(int blockX = topLeftX; blockX < bottomRightX; blockX++) {
+				if(blockY >= (mapHeightBlocks/2))
+					block = blockBackgroundGround;
+				else {
+					block = blockBackgroundSky;
+				}
+				renderer.renderSprite(block, blockX*blockPixelWidth, blockY*blockPixelHeight, xZoom, yZoom, false);
+			}
+		}
+
 
 		for(int layer = 0; layer <= numLayers; layer++) {
+			//			topLeftX = camera.x;
+			//			topLeftY = camera.y;
+			//			bottomRightX = camera.x + camera.width;
+			//			bottomRightY = camera.y + camera.height;
+			//
+			//			int leftBlockX = (topLeftX/tileWidth - blockStartX) / blockWidth;
+			//
+			//			int blockX = leftBlockX;
+			//			int blockY = (topLeftY/tileHeight - blockStartY) / blockHeight;
+			//
+			//			int pixelX = topLeftX;
+			//			int pixelY = topLeftY;
+			//
+			//			while(pixelX < bottomRightX && pixelY < bottomRightY) {
+			//				if(blockX >= 0 && blockY >= 0 && blockX < blocks.length && blockY < blocks.length) {
+			//					if(blocks[blockX][blockY] != null) {
+			//
+			//						blocks[blockX][blockY].render(renderer, layer, tileWidth, tileHeight, xZoom, yZoom);
+			//					}
+			//				}
+			//
+			//				blockX++;
+			//				pixelX += blockPixelWidth;
+			//
+			//				if(pixelX > bottomRightX) {
+			//					pixelX = topLeftX;
+			//					blockX = leftBlockX;
+			//					blockY++;
+			//					pixelY += blockPixelHeight;
+			//					if(pixelY > bottomRightY)
+			//						break;
+			//				}
+			//			}
 
-			int topLeftX = camera.x;
-			int topLeftY = camera.y;
-			int bottomRightX = camera.x + camera.width;
-			int bottomRightY = camera.y + camera.height;
+			topLeftX = camera.x/blockPixelWidth;
+			topLeftY = camera.y/blockPixelHeight;
+			bottomRightX = (camera.x + camera.width)/blockPixelWidth + 1;
+			bottomRightY = (camera.y + camera.height)/blockPixelHeight + 1;
 
-			int leftBlockX = (topLeftX/tileWidth - blockStartX) / blockWidth;
+			for(int blockY = topLeftY; blockY < bottomRightY; blockY++) {
+				for(int blockX = topLeftX; blockX < bottomRightX; blockX++) {
+					if(blockX >= 0 && blockY >= 0 && blockX < blocks.length && blockY < blocks.length) {
+						if(blocks[blockX][blockY] != null) {
 
-			int blockX = leftBlockX;
-			int blockY = (topLeftY/tileHeight - blockStartY) / blockHeight;
-
-			int pixelX = topLeftX;
-			int pixelY = topLeftY;
-
-			while(pixelX < bottomRightX && pixelY < bottomRightY) {
-
-				if(blockX >= 0 && blockY >= 0 && blockX < blocks.length && blockY < blocks.length) {
-					if(blocks[blockX][blockY] != null) {
-						
-						//renderer.renderSprite(blockBackground, 0, blockStartX + blockX*blockPixelWidth, blockStartY + blockY*blockPixelHeight, xZoom, yZoom, true, camera.x, camera.y, camera.width, camera.height );
-						
-						blocks[blockX][blockY].render(renderer, layer, tileWidth, tileHeight, xZoom, yZoom);
+							blocks[blockX][blockY].render(renderer, layer, tileWidth, tileHeight, xZoom, yZoom);
+						}
 					}
 				}
-
-				blockX++;
-				pixelX += blockPixelWidth;
-
-				if(pixelX > bottomRightX) {
-					pixelX = topLeftX;
-					blockX = leftBlockX;
-					blockY++;
-					pixelY += blockPixelHeight;
-					if(pixelY > bottomRightY)
-						break;
-				}
 			}
+
 
 			for(int i = 0; i < objects.length; i++) {
 				if(objects[i].getLayer() == layer)
@@ -212,7 +270,6 @@ public class Map {
 		for(int i = 0; i < objects.length; i++) 
 			if(objects[i].getLayer() == Integer.MAX_VALUE)
 				objects[i].render(renderer, xZoom, yZoom);
-
 
 
 	}
@@ -230,11 +287,7 @@ public class Map {
 			mapFile.createNewFile();
 
 			PrintWriter pr = new PrintWriter(mapFile);
-			
-			if(comments.size() == 0) {
-				comments.put(0, "// layer, rotation, tileID, x, y");
-			}
-			
+
 			for(int i = 0; i < mappedTiles.size(); i++)	{
 				if(comments.containsKey(currentLine)) {
 					pr.println(comments.get(currentLine));
@@ -257,6 +310,40 @@ public class Map {
 
 
 
+	/**
+	 * Method that places blocks for a map, only called on a new, empty map.
+	 * 
+	 * @param mapWidthBlocks
+	 * @param mapHeightBlocks
+	 */
+	public void generateWorld(int mapWidthBlocks, int mapHeightBlocks, int seed) {
+
+		// use seed idea
+		this.seed = seed;
+		Random r = new Random(seed);
+
+		comments.put(0, "SEED:" +seed);
+		comments.put(1, "// layer, rotation, tileID, x, y");
+
+		for(int y = 0; y < mapHeightBlocks * tileHeight; y++)
+			for(int x = 0; x < mapWidthBlocks * tileWidth; x++) {
+
+				if(y >= mapHeightBlocks * tileHeight / 5 && y < mapHeightBlocks * tileHeight / 4) {
+					setTile(1, 0, x, y, 0);
+				}
+				else if(y >= mapHeightBlocks * tileHeight / 4) {
+					setTile(1, 0, x, y, 2);
+				}
+				System.out.println(y +"/" + mapHeightBlocks * tileHeight);
+			
+			}
+		
+		System.out.println("World generated!");
+	}
+
+
+
+
 	public MappedTile getTile(int layer, int tileX, int tileY) {
 		int blockX = (tileX - blockStartX) / blockWidth;
 		int blockY = (tileY - blockStartY) / blockHeight;
@@ -272,6 +359,23 @@ public class Map {
 			return block.getTile(layer, tileX, tileY);
 	}
 
+	
+	
+	
+	public void setBlock(int layer, int rotation, int blockX, int blockY, int tileID) {
+		
+	}
+	
+	
+	
+	
+	/**
+	 * @param layer
+	 * @param rotation
+	 * @param tileX
+	 * @param tileY
+	 * @param tileID
+	 */
 	public void setTile(int layer, int rotation, int tileX, int tileY, int tileID) {
 
 		if(layer >= numLayers)
@@ -324,8 +428,7 @@ public class Map {
 			else if(blockY >= blocks[0].length)
 				newLengthY = blocks[0].length + blockY;
 
-			System.out.println(newLengthX);
-			System.out.println(newLengthY);
+			System.out.println(newLengthX +" "+ newLengthY);
 			Block[][] newBlocks = new Block[newLengthX][newLengthY];
 
 			for(int x = 0; x < blocks.length; x++) 
@@ -444,7 +547,7 @@ public class Map {
 	 */
 	public int findYMin(int layer, int playerX, int playerY, int playerWidth, int playerHeight) {
 		int playerCentreX = playerX + ((playerWidth * xZoom) / 2);
-		
+
 		for(int y = playerY + playerHeight * yZoom; y < getHeight(); y += tileHeight) {
 			MappedTile tile = getTile(layer, (playerCentreX/tileWidth), (y/tileHeight));
 			if(tile != null) {

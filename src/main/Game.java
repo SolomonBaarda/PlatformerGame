@@ -117,9 +117,10 @@ public class Game extends JFrame implements Runnable {
 
 
 		// Load map
-		Sprite background = new Sprite(loadImage("/sprites/background.png"));
-		Sprite blockBackground = new Sprite(loadImage("/sprites/blockBackground.png"));
-		map = new Map(mapFile, tiles, background, blockBackground, 16, 8, xZoom, yZoom);
+		Sprite blockBackgroundSky = new Sprite(loadImage("/sprites/blockBackgroundSky.png"));
+		Sprite blockBackgroundGround = new Sprite(loadImage("/sprites/blockBackgroundGround.png"));
+		
+		map = new Map(mapFile, tiles, blockBackgroundSky, blockBackgroundGround, 4, 4, xZoom, yZoom);
 
 		// Load SDK GUI
 		GUIButton[] buttons = new GUIButton[tiles.size() + map.numLayers +1];
