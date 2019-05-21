@@ -13,6 +13,7 @@ public class Map {
 	private File mapFile;
 	private Tiles tileSet;
 	private Sprite background;
+	private Sprite blockBackground;
 
 	private ArrayList<MappedTile> mappedTiles; 
 	private Block[][] blocks;
@@ -31,16 +32,22 @@ public class Map {
 	private final int blockPixelHeight = blockHeight * tileHeight;
 
 	public int numLayers = 3;
+	
+	private int mapWidth, mapHeight;
 
 	private HashMap<Integer, String> comments;
 
-	public Map(File mapFile, Tiles tileSet, Sprite background, int xZoom, int yZoom) {
+	public Map(File mapFile, Tiles tileSet, Sprite background, Sprite blockBackground, int mapWidthBlocks, int mapHeightBlocks, int xZoom, int yZoom) {
 		this.mapFile = mapFile;
 		this.tileSet = tileSet;
 		this.background = background;
+		this.blockBackground = blockBackground;
 		this.xZoom = xZoom;
 		this.yZoom = yZoom;
-
+		
+		this.mapWidth = mapWidthBlocks * blockPixelWidth;
+		this.mapHeight = mapHeightBlocks * blockPixelHeight;
+		
 		int minX = Integer.MAX_VALUE;
 		int minY = Integer.MAX_VALUE;
 		int maxX = Integer.MIN_VALUE;
@@ -151,17 +158,14 @@ public class Map {
 	public void render(RenderHandler renderer, GameObject[] objects, int xZoom, int yZoom) {
 		// Render background
 		Rectangle camera = renderer.getCamera();
-		renderer.renderSprite(background, 0,0, 0, 1, 1, true, camera.getX(), camera.getY(), camera.getWidth(), camera.getHeight() );
+		//renderer.renderSprite(background, 0,0, 0, 1, 1, true, camera.getX(), camera.getY(), camera.getWidth(), camera.getHeight() );
 
-		int tileWidth = Game.tilePixels * xZoom;
-		int tileHeight = Game.tilePixels * yZoom;
+		for(int layer = 0; layer <= numLayers; layer++) {
 
-		for(int layer = 0; layer < numLayers; layer++) {
-
-			int topLeftX = renderer.getCamera().getX();
-			int topLeftY = renderer.getCamera().getY();
-			int bottomRightX = renderer.getCamera().getX() + renderer.getCamera().getWidth();
-			int bottomRightY = renderer.getCamera().getY() + renderer.getCamera().getHeight();
+			int topLeftX = camera.x;
+			int topLeftY = camera.y;
+			int bottomRightX = camera.x + camera.width;
+			int bottomRightY = camera.y + camera.height;
 
 			int leftBlockX = (topLeftX/tileWidth - blockStartX) / blockWidth;
 
@@ -174,8 +178,12 @@ public class Map {
 			while(pixelX < bottomRightX && pixelY < bottomRightY) {
 
 				if(blockX >= 0 && blockY >= 0 && blockX < blocks.length && blockY < blocks.length) {
-					if(blocks[blockX][blockY] != null)
+					if(blocks[blockX][blockY] != null) {
+						
+						//renderer.renderSprite(blockBackground, 0, blockStartX + blockX*blockPixelWidth, blockStartY + blockY*blockPixelHeight, xZoom, yZoom, true, camera.x, camera.y, camera.width, camera.height );
+						
 						blocks[blockX][blockY].render(renderer, layer, tileWidth, tileHeight, xZoom, yZoom);
+					}
 				}
 
 				blockX++;
@@ -417,74 +425,6 @@ public class Map {
 	}
 
 
-	//
-	//	public boolean checkCollision(Rectangle playerHitbox, int playerLayer, int xZoom, int yZoom) {
-	//		int tileWidth = Game.tilePixels * xZoom;
-	//		int tileHeight = Game.tilePixels * yZoom;
-	//
-	//		// coordinates to check in a 4x4 area around the player
-	//		int topLeftX = (playerHitbox.getX() - tileWidth) / tileWidth;
-	//		int topLeftY = (playerHitbox.getY() - tileHeight) / tileHeight;
-	//		int bottomRightX = (playerHitbox.getX() + playerHitbox.getWidth() + tileWidth) / tileWidth;
-	//		int bottomRightY = (playerHitbox.getY() + playerHitbox.getHeight() + tileHeight) / tileHeight;
-	//
-	//		//  start top left, go to bottom right
-	//		for(int x = topLeftX; x <= bottomRightX; x++)
-	//			for(int y = topLeftY; y <= bottomRightY; y++) {
-	//				MappedTile tile = getTile(playerLayer, x, y);
-	//
-	//				if(tile != null) {					
-	//					int collisionType = tileSet.collisionType(tile.id);
-	//
-	//					//Full tile collision
-	//					if(collisionType == 1) {
-	//						System.out.println("Type 1");
-	//						Rectangle tileRectangle = new Rectangle(tile.x*tileWidth, tile.y*tileHeight, tileWidth, tileHeight);
-	//							if(tileRectangle.intersects(playerHitbox)) {
-	//								System.out.println("colliding");
-	//							return true;
-	//							}
-	//
-	//					} 
-	//					//Top of tile collision
-	//					else if(collisionType == 2) {
-	//						System.out.println("Type 2");
-	//						Rectangle tileRectangle = new Rectangle(tile.x*tileWidth, tile.y*tileHeight, tileWidth, tileHeight/2);
-	//						if(tileRectangle.intersects(playerHitbox))
-	//							return true;
-	//
-	//					} 
-	//					//Left of tile collision
-	//					else if(collisionType == 3) {
-	//						System.out.println("Type 3");
-	//						Rectangle tileRectangle = new Rectangle(tile.x*tileWidth, tile.y*tileHeight, tileWidth/2, tileHeight);
-	//						if(tileRectangle.intersects(playerHitbox))
-	//							return true;
-	//
-	//					} 
-	//					//Bottom of tile collision
-	//					else if (collisionType == 4) {
-	//						Rectangle tileRectangle = new Rectangle(tile.x*tileWidth, tile.y*tileHeight + tileHeight - 16, tileWidth, 16);
-	//						Rectangle adjustedRect = new Rectangle(playerHitbox.getX(), playerHitbox.getY() + playerHitbox.getHeight(), playerHitbox.getWidth(), 1);
-	//						if(tileRectangle.intersects(adjustedRect))
-	//							return true;
-	//
-	//					} 
-	//					//Right of tile collision
-	//					else if (collisionType == 5) {
-	//						Rectangle tileRectangle = new Rectangle(tile.x*tileWidth + tileWidth - 16, tile.y*tileHeight, 16, tileHeight);
-	//						if(tileRectangle.intersects(playerHitbox))
-	//							return true;
-	//					}
-	//
-	//				}
-	//			}
-	//		return false;
-	//	}
-	//
-
-
-
 	/**
 	 * Method that searches for the closest tile below the player, and returns its y position.
 	 * 
@@ -509,11 +449,11 @@ public class Map {
 
 
 	public int getWidth() {
-		return background.getWidth();
+		return mapWidth;
 	}
 
 	public int getHeight() {
-		return background.getHeight();
+		return mapHeight;
 	}
 
 	// represents 8x8 block of tiles
@@ -530,6 +470,7 @@ public class Map {
 		}
 
 		public void render(RenderHandler renderer, int layer, int tileWidth, int tileHeight, int xZoom, int yZoom) {
+
 			if(mappedTilesByLayer.length > layer) {
 				ArrayList<MappedTile> mappedTiles = mappedTilesByLayer[layer];
 
