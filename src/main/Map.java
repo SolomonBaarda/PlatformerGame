@@ -140,7 +140,7 @@ public class Map {
 				blocks[blockX][blockY].addTile(mappedTile);
 			}
 
-			System.out.println("Map loaded successfully!");
+			System.out.println(mapFile+ " loaded successfully!");
 
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
@@ -231,6 +231,7 @@ public class Map {
 				currentLine++;
 			}
 			pr.close();
+			System.out.println(mapFile+ " saved succesfully!");
 
 		}
 		catch(IOException e) {

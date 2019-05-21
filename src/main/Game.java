@@ -48,7 +48,6 @@ public class Game extends JFrame implements Runnable {
 
 	private SpriteSheet sheet;
 	private SpriteSheet playerSheet;
-	private SpriteSheet font;
 	private AnimatedSprite playerAnimation;
 
 	private Tiles tiles;
@@ -104,10 +103,6 @@ public class Game extends JFrame implements Runnable {
 		playerSheet.loadSprites(20, 26);
 		// Player animated sprite
 		playerAnimation = new AnimatedSprite(playerSheet, 8);
-		BufferedImage fontImage = loadImage("/sprites/font_5.png");
-		font = new SpriteSheet(fontImage);
-		//playerSheet.loadSprites(12, 12, 2);
-
 
 		// print all files in directory 
 		//		File file = new File(".");
@@ -191,8 +186,10 @@ public class Game extends JFrame implements Runnable {
 
 
 		canvas.requestFocus();
-		
+
+		System.out.println();
 		System.out.println("Game() loaded.");
+		System.out.println();
 	}
 
 
@@ -265,7 +262,6 @@ public class Game extends JFrame implements Runnable {
 		for(int i = 0; i < objects.length; i++)
 			objects[i].update(this);
 
-
 	}
 
 
@@ -313,10 +309,6 @@ public class Game extends JFrame implements Runnable {
 
 
 	public void run() {
-		//		BufferStrategy bufferStrategy = canvas.getBufferStrategy();
-		//		int i = 0;
-		//		int x = 0;
-
 		long lastTime = System.nanoTime(); //long 2^63
 		double nanoSecondConversion = 1000000000.0 / 60; // 60 ticks per second
 		double changeInSeconds = 0;
@@ -367,7 +359,6 @@ public class Game extends JFrame implements Runnable {
 
 		if(keys[KeyEvent.VK_S]) {
 			map.saveMap();
-			System.out.println("Map saved succesfully!");
 		}
 	}
 

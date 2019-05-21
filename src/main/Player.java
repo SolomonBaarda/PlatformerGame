@@ -152,24 +152,22 @@ public class Player implements GameObject {
 
 		if(collidedTiles != null) {
 			for(int i = 0; i < collidedTiles.size(); i++) {
+				// Each tile hitbox rectangle 
 				Rectangle tile = collidedTiles.get(i);
 
 				// Block is below
-				if(velocity.y > 0) {
-					if(hitbox.y + game.yZoom * hitbox.height > tile.y && hitbox.y + game.yZoom * hitbox.height < tile.y + tile.height/4) {
-						hitbox.y = tile.y - (game.yZoom * hitbox.height);
-
-						if(tile.y - hitbox.height * game.yZoom < yMin) {
-							yMin = tile.y - hitbox.height * game.yZoom;
-							onGround = true;
-						}
-					}
+				if(hitbox.y + game.yZoom * hitbox.height > tile.y && hitbox.y + game.yZoom * hitbox.height < tile.y + tile.height/2) {
+					yMin = tile.y - (game.yZoom * hitbox.height);
+					hitbox.y = yMin;
+					
+					onGround = true;
 				}
 
 				// Block is above
-				if(hitbox.y < tile.y + tile.height && hitbox.y > tile.y + tile.height - tile.height/4) {
+				else if(hitbox.y < tile.y + tile.height && hitbox.y > tile.y + tile.height/2) {
 					hitbox.y = tile.y + tile.height;
 
+					// If jumping and collide with ceiling 
 					if(velocity.y < 0) {
 						velocity.y = 0;
 						onGround = false;
@@ -177,35 +175,36 @@ public class Player implements GameObject {
 				}
 
 				// Block is left
-				if(hitbox.x < tile.x + tile.width && hitbox.x > tile.x + tile.width - tile.width/4) {
+				else if(hitbox.x < tile.x + tile.width && hitbox.x > tile.x + 3*tile.width/4) {
 					hitbox.x = tile.x + tile.width;
-
 				}
 
 				// Block is right
-				if(hitbox.x + (hitbox.width * game.xZoom) > tile.x && hitbox.x + (hitbox.width * game.xZoom) < tile.x + tile.width/4) {
+				else if(hitbox.x + (hitbox.width * game.xZoom) > tile.x && hitbox.x + (hitbox.width * game.xZoom) < tile.x + tile.width/4) {
 					hitbox.x = tile.x - (hitbox.width * game.xZoom);
-
 				}
 
+				
 			}
-
 		}
 
-		// If on the ground
+		// If on the ground, or on a block
 		if(hitbox.y == yMin) {
-			velocity.y = 0;
-			velocity.x = 0;
 			onGround = true;
 		}
 		// If in the air
 		else {
+			onGround = false;
+			
 			if(velocity.y < TERMINAL_VELOCITY)
 				velocity.y += GRAVITY;
-
-			onGround = false;
 		}
 
+		if(onGround) {
+			velocity.y = 0;
+			velocity.x = 0;
+		}
+		
 
 		// Read key inputs
 		// Face backwards
@@ -248,10 +247,6 @@ public class Player implements GameObject {
 			didMove = false;
 			velocity.x = 0;
 		}
-
-		// Stand facing forward if not moving 
-		//		if(!didMove && onGround)
-		//			newDirection = 3;
 
 
 		// set possible new values
