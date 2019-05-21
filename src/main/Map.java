@@ -158,7 +158,10 @@ public class Map {
 	public void render(RenderHandler renderer, GameObject[] objects, int xZoom, int yZoom) {
 		// Render background
 		Rectangle camera = renderer.getCamera();
-		//renderer.renderSprite(background, 0,0, 0, 1, 1, true, camera.getX(), camera.getY(), camera.getWidth(), camera.getHeight() );
+		
+		
+		// make each block render background piece 
+		renderer.renderSprite(background, 0,0, 0, 1, 1, true, camera.getX(), camera.getY(), camera.getWidth(), camera.getHeight() );
 
 		for(int layer = 0; layer <= numLayers; layer++) {
 
@@ -227,6 +230,10 @@ public class Map {
 			mapFile.createNewFile();
 
 			PrintWriter pr = new PrintWriter(mapFile);
+			
+			if(comments.size() == 0) {
+				comments.put(0, "// layer, rotation, tileID, x, y");
+			}
 			
 			for(int i = 0; i < mappedTiles.size(); i++)	{
 				if(comments.containsKey(currentLine)) {

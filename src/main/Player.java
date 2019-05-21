@@ -42,8 +42,8 @@ public class Player implements GameObject {
 
 		updateDirection();
 
-		hitbox = new Rectangle(0, 2000 - 3*sprite.getHeight(), sprite.getWidth(), sprite.getHeight());
-		hitbox.generateGraphics(1, 0xFF00FF90);
+		int x = 0;
+		int y = 0;
 
 		// If player file does'nt exist - create new player
 		if(!playerFile.exists()) {
@@ -66,8 +66,6 @@ public class Player implements GameObject {
 				pr.close();
 				System.out.println("Player name saved!");
 
-
-
 			} catch (IOException e) {
 				e.printStackTrace();
 				System.out.println("Failed to create player name.");
@@ -81,12 +79,16 @@ public class Player implements GameObject {
 				name = s.next();
 
 				health = s.nextInt();
+				
 				s.close();
 
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 				System.out.println("Failed to load player name.");
 			}
+			
+			hitbox = new Rectangle(x, y - yZoom*sprite.getHeight(), sprite.getWidth(), sprite.getHeight());
+			hitbox.generateGraphics(1, 0xFF00FF90);
 
 		}
 
