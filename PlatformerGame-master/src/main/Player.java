@@ -145,31 +145,25 @@ public class Player implements GameObject {
 
 		Map map = game.getMap();
 
-
 		// yMin = y value of surface below player
-		//		int yMin = map.findYMin(layer, hitbox.getX(), hitbox.getY(), hitbox.getHeight());
-		//System.out.println(yMin);
-
-		// By default set yMin to be map floor
-		int yMin = map.getHeight() - hitbox.getHeight() * game.yZoom;
+		int yMin = map.findYMin(layer, hitbox.x, hitbox.y, hitbox.width, hitbox.height);
 
 		ArrayList<Rectangle> collidedTiles = map.getCollision(new Rectangle(hitbox.x, hitbox.y, hitbox.width * game.xZoom, hitbox.height * game.yZoom), layer);
 
 		if(collidedTiles != null) {
 			for(int i = 0; i < collidedTiles.size(); i++) {
 				Rectangle tile = collidedTiles.get(i);
-				//				System.out.println("Tile " +tile.x+ ", " +tile.y );
-				//				System.out.println("Player " +hitbox.x+ ", " +hitbox.y);
 
 				// Block is below
-				if(hitbox.y + game.yZoom * hitbox.height > tile.y && hitbox.y + game.yZoom * hitbox.height < tile.y + tile.height/4) {
-					hitbox.y = tile.y - (game.yZoom * hitbox.height);
+				if(velocity.y > 0) {
+					if(hitbox.y + game.yZoom * hitbox.height > tile.y && hitbox.y + game.yZoom * hitbox.height < tile.y + tile.height/4) {
+						hitbox.y = tile.y - (game.yZoom * hitbox.height);
 
-					if(tile.y - hitbox.height * game.yZoom < yMin) {
-						yMin = tile.y - hitbox.height * game.yZoom;
-						onGround = true;
+						if(tile.y - hitbox.height * game.yZoom < yMin) {
+							yMin = tile.y - hitbox.height * game.yZoom;
+							onGround = true;
+						}
 					}
-
 				}
 
 				// Block is above
@@ -186,13 +180,11 @@ public class Player implements GameObject {
 				if(hitbox.x < tile.x + tile.width && hitbox.x > tile.x + tile.width - tile.width/4) {
 					hitbox.x = tile.x + tile.width;
 
-
 				}
 
 				// Block is right
 				if(hitbox.x + (hitbox.width * game.xZoom) > tile.x && hitbox.x + (hitbox.width * game.xZoom) < tile.x + tile.width/4) {
 					hitbox.x = tile.x - (hitbox.width * game.xZoom);
-
 
 				}
 
@@ -200,27 +192,19 @@ public class Player implements GameObject {
 
 		}
 
-		// If in the air
-		if(hitbox.y < yMin || hitbox.y > yMin) {
-			if(velocity.y < TERMINAL_VELOCITY)
-				velocity.y += GRAVITY;
-			
-			onGround = false;
-		}
 		// If on the ground
-		else if(hitbox.y == yMin) {
+		if(hitbox.y == yMin) {
 			velocity.y = 0;
 			velocity.x = 0;
-			hitbox.y = yMin;
 			onGround = true;
 		}
+		// If in the air
 		else {
-			// Below the ground?
-			hitbox.y = yMin;
+			if(velocity.y < TERMINAL_VELOCITY)
+				velocity.y += GRAVITY;
+
+			onGround = false;
 		}
-
-
-
 
 
 		// Read key inputs
@@ -236,7 +220,6 @@ public class Player implements GameObject {
 		// Jump
 		if(keyListener.space()) {
 			didMove = true;
-			//newDirection = 2;
 
 			// Only allow jump if on the ground
 			if(onGround)
@@ -248,19 +231,15 @@ public class Player implements GameObject {
 			didMove = true;
 			newDirection = 1;
 
-
 			velocity.x = -speed;
-
-
 		}
+
 		// Move right
 		if(keyListener.right()) {
 			didMove = true;
 			newDirection = 0;
 
-
 			velocity.x = speed;
-
 		}
 
 		// Stand still
@@ -270,18 +249,14 @@ public class Player implements GameObject {
 			velocity.x = 0;
 		}
 
-
 		// Stand facing forward if not moving 
 		//		if(!didMove && onGround)
 		//			newDirection = 3;
 
 
-
-
 		// set possible new values
 		int newX = (int) (hitbox.x + velocity.x);
 		int newY = (int) (hitbox.y + velocity.y);
-
 
 		// set map bounds
 		if(newX < 0)
@@ -295,16 +270,10 @@ public class Player implements GameObject {
 			newY = map.getHeight() - hitbox.getHeight() * game.yZoom;
 
 
+
 		// Set new position
 		hitbox.x = newX;
 		hitbox.y = newY;
-
-
-
-
-
-
-
 
 
 

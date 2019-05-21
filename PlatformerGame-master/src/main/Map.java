@@ -490,14 +490,17 @@ public class Map {
 	 * @param layer
 	 * @param playerX
 	 * @param playerY
-	 * @return			bottom of the map otherwise
+	 * @param playerWidth
+	 * @param playerHeight
+	 * @return				bottom of the map otherwise
 	 */
-	public int findYMin(int layer, int playerX, int playerY, int playerHeight) {
-		for(int y = playerY + playerHeight; y < getHeight(); y += tileHeight) {
-			MappedTile tile = getTile(layer, playerX, y);
+	public int findYMin(int layer, int playerX, int playerY, int playerWidth, int playerHeight) {
+		int playerCentreX = playerX + ((playerWidth * xZoom) / 2);
+		
+		for(int y = playerY + playerHeight * yZoom; y < getHeight(); y += tileHeight) {
+			MappedTile tile = getTile(layer, (playerCentreX/tileWidth), (y/tileHeight));
 			if(tile != null) {
-				System.out.println("Tile below!");
-				return tile.getY();
+				return tile.getY()*tileWidth;
 			}
 		}
 		return getHeight() - playerHeight * yZoom;
