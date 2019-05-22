@@ -57,7 +57,16 @@ public class Tiles {
 	}
 
 
+	public int findTile(String tileName) {
+		for(int i = 0; i < tilesList.size(); i++) 
+			if(tilesList.get(i).getTileName().equals(tileName))
+				return i;
+		
+		return -1;
+	}
 
+	
+	
 	public void renderTiles(int tileID, RenderHandler renderer, int rotation, int xPos, int yPos, int xZoom, int yZoom) {
 
 		if(tileID >= 0 && tilesList.size() > tileID) {

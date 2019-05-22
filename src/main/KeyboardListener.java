@@ -82,6 +82,10 @@ public class KeyboardListener implements KeyListener, FocusListener {
 	public boolean space() {
 		return keys[KeyEvent.VK_SPACE];
 	}
+	
+	public boolean shift() {
+		return keys[KeyEvent.VK_SHIFT];
+	}
 
 
 	

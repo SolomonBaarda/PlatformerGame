@@ -15,6 +15,7 @@ public class Map {
 	private Tiles tileSet;
 	private Sprite blockBackgroundSky;
 	private Sprite blockBackgroundGround;
+	private Sprite blockBackgroundStone;
 
 	private ArrayList<MappedTile> mappedTiles; 
 	private Block[][] blocks;
@@ -38,6 +39,7 @@ public class Map {
 	private int mapWidthBlocks, mapHeightBlocks;
 
 	private int seed;
+	private int grassBlockY = 2;
 	private boolean generated;
 
 	private HashMap<Integer, String> comments;
@@ -52,11 +54,12 @@ public class Map {
 	 * @param xZoom
 	 * @param yZoom
 	 */
-	public Map(File mapFile, Tiles tileSet, Sprite blockBackgroundSky, Sprite blockBackgroundGround, int mapWidthBlocks, int mapHeightBlocks, int xZoom, int yZoom) {
+	public Map(File mapFile, Tiles tileSet, Sprite blockBackgroundSky, Sprite blockBackgroundGround, Sprite blockBackgroundStone, int mapWidthBlocks, int mapHeightBlocks, int xZoom, int yZoom) {
 		this.mapFile = mapFile;
 		this.tileSet = tileSet;
 		this.blockBackgroundSky = blockBackgroundSky;
 		this.blockBackgroundGround = blockBackgroundGround;
+		this.blockBackgroundStone = blockBackgroundStone;
 		this.xZoom = xZoom;
 		this.yZoom = yZoom;
 
@@ -197,8 +200,11 @@ public class Map {
 
 		for(int blockY = topLeftY; blockY < bottomRightY; blockY++) {
 			for(int blockX = topLeftX; blockX < bottomRightX; blockX++) {
-				if(blockY >= (mapHeightBlocks/2))
+				// if dirt level
+				if(blockY == grassBlockY)
 					block = blockBackgroundGround;
+				else if(blockY >= grassBlockY + 1)
+					block = blockBackgroundStone;
 				else {
 					block = blockBackgroundSky;
 				}
@@ -328,20 +334,26 @@ public class Map {
 
 		comments.put(0, "// layer, rotation, tileID, x, y");
 
-		// Create grass
-		for(int i=0; i<mapWidthBlocks; i++)
-			setBlock(i, 1, 1, 1, 0);
+		// Create stone
+		for(int y=mapHeightBlocks/2; y<mapHeightBlocks; y++)
+			for(int x=0; x<mapWidthBlocks; x++)
+				setBlock(x, y, tileSet.findTile("Stone"), 1, 0);
 		
 		// Create dirt
-		for(int y=2; y<mapHeightBlocks; y++)
+		for(int y=grassBlockY; y<mapHeightBlocks/2; y++)
 			for(int x=0; x<mapWidthBlocks; x++)
-				setBlock(x, y, 2, 1, 0);
+				setBlock(x, y, tileSet.findTile("Dirt"), 1, 0);
+		
+		// Create grass
+		for(int y = grassBlockY*blockHeight; y < grassBlockY*blockHeight + 2; y++)
+			for(int x=0; x<mapWidthBlocks*blockWidth; x++)
+				setTile(1, 0, x, y, tileSet.findTile("Grass"));
 		
 		// Generate trees
 		for(int x=0; x<mapWidth; x++) {
 			if(r.nextInt(3) == 0) {
-				setTile(0, 0, x, blockHeight-1, 9);
-				setTile(0, 0, x, blockHeight-2, 8);
+				setTile(0, 0, x, grassBlockY*blockWidth-1, tileSet.findTile("TreeBottom"));
+				setTile(0, 0, x, grassBlockY*blockWidth-2, tileSet.findTile("TreeTop"));
 			}
 		}
 		
@@ -395,12 +407,13 @@ public class Map {
 	
 	
 	
+
 	/**
-	 * @param layer
-	 * @param rotation
 	 * @param blockX
 	 * @param blockY
 	 * @param tileID
+	 * @param layer
+	 * @param rotation
 	 */
 	public void setBlock(int blockX, int blockY, int tileID, int layer, int rotation) {
 		setTiles(blockX * blockWidth, blockY * blockHeight, blockX * blockWidth + blockWidth - 1, blockY * blockHeight + blockHeight - 1, tileID, layer, rotation);
@@ -468,7 +481,7 @@ public class Map {
 			else if(blockY >= blocks[0].length)
 				newLengthY = blocks[0].length + blockY;
 
-			System.out.println(newLengthX +" "+ newLengthY);
+			System.out.println("New blockLength "+ newLengthX +" "+ newLengthY);
 			Block[][] newBlocks = new Block[newLengthX][newLengthY];
 
 			for(int x = 0; x < blocks.length; x++) 

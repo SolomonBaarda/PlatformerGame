@@ -1,9 +1,10 @@
-// TileName-SpriteXPos-spriteYPos-ColisionType
+// TileName-SpriteXPos-SpriteYPos-ColisionType
 // x and y pos from spriteSheet
 // Collision type 0/blank = no collision, 1 = solid, 2 = half
 Grass-0-0-1
 Grass2-0-1-1
 Dirt-1-0-1
+Stone-1-1-1
 Brick-1-2-1
 BrickSlabTop-2-2-2
 BrickSlabBottom-2-3-2

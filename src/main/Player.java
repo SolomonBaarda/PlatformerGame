@@ -26,8 +26,9 @@ public class Player implements GameObject {
 	private int direction;
 
 	// Platformer movement
-	private int speed = 7;
-	private int jumpSpeed = 20;
+	private final int DEFAULT_SPEED = 7;
+	private int speed = DEFAULT_SPEED;
+	private int jumpSpeed = 15;
 	private Vector2 velocity = new Vector2();
 	private final float GRAVITY = 0.5f;
 	private final float TERMINAL_VELOCITY = 10;
@@ -206,6 +207,12 @@ public class Player implements GameObject {
 			velocity.y = 0;
 			velocity.x = 0;
 		}
+		
+		
+		
+		speed = DEFAULT_SPEED;
+		if(keyListener.shift())
+			speed = 7*DEFAULT_SPEED/4;
 		
 
 		// Read key inputs
