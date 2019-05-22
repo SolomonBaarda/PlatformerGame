@@ -120,7 +120,9 @@ public class Game extends JFrame implements Runnable {
 		Sprite blockBackgroundSky = new Sprite(loadImage("/sprites/blockBackgroundSky.png"));
 		Sprite blockBackgroundGround = new Sprite(loadImage("/sprites/blockBackgroundGround.png"));
 		
-		map = new Map(mapFile, tiles, blockBackgroundSky, blockBackgroundGround, 4, 4, xZoom, yZoom);
+		int mapWidth = 8;
+		int mapHeight = 6;
+		map = new Map(mapFile, tiles, blockBackgroundSky, blockBackgroundGround, mapWidth, mapHeight, xZoom, yZoom);
 
 		// Load SDK GUI
 		GUIButton[] buttons = new GUIButton[tiles.size() + map.numLayers +1];
@@ -145,7 +147,7 @@ public class Game extends JFrame implements Runnable {
 		// Create gameObjects array
 		objects = new GameObject[2];
 		// Create Player
-		player = new Player(playerAnimation, new File("./players/Player.txt"), xZoom, yZoom);
+		player = new Player(playerAnimation, new File("./players/Player.txt"), xZoom, yZoom, mapWidth*8*16/2, mapHeight*8*16/4);
 		// Add player to gameObjects
 		objects[0] = player;
 		// Add GUI to gameObjects

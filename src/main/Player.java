@@ -32,7 +32,7 @@ public class Player implements GameObject {
 	private final float GRAVITY = 0.5f;
 	private final float TERMINAL_VELOCITY = 10;
 
-	public Player(Sprite sprite, File playerFile, int xZoom, int yZoom) {
+	public Player(Sprite sprite, File playerFile, int xZoom, int yZoom, int xSpawnPos, int ySpawnPos) {
 
 		this.sprite = sprite;
 		this.playerFile = playerFile;
@@ -87,7 +87,7 @@ public class Player implements GameObject {
 				System.out.println("Failed to load player name.");
 			}
 			
-			hitbox = new Rectangle(x, y - yZoom*sprite.getHeight(), sprite.getWidth(), sprite.getHeight());
+			hitbox = new Rectangle(xSpawnPos, ySpawnPos, sprite.getWidth(), sprite.getHeight());
 			hitbox.generateGraphics(1, 0xFF00FF90);
 
 		}

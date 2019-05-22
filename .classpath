@@ -2,7 +2,6 @@
 <classpath>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="src" path="saves"/>
 	<classpathentry kind="src" path="assets"/>
 	<classpathentry kind="src" path="players"/>
 	<classpathentry kind="output" path="bin1"/>
