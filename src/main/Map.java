@@ -167,15 +167,15 @@ public class Map {
 
 			if(mappedTiles.isEmpty() && comments.isEmpty()) {
 				System.out.println("World is empty. Generating world!");
-				
+
 				if(seed == 0) {
 					seed = (new Random()).nextInt();
 				}
-				
+
 				generateWorld(mapWidthBlocks, mapHeightBlocks, seed);
 				saveMap();
 			}
-			
+
 			System.out.println(mapFile+ " loaded successfully!");
 
 
@@ -247,21 +247,21 @@ public class Map {
 				}
 			}
 
-//			topLeftX = camera.x/blockPixelWidth;
-//			topLeftY = camera.y/blockPixelHeight;
-//			bottomRightX = (camera.x + camera.width)/blockPixelWidth + 1;
-//			bottomRightY = (camera.y + camera.height)/blockPixelHeight + 1;
-//
-//			for(int blockY = topLeftY; blockY < bottomRightY; blockY++) {
-//				for(int blockX = topLeftX; blockX < bottomRightX; blockX++) {
-//					if(blockX >= 0 && blockY >= 0 && blockX < blocks.length && blockY < blocks.length) {
-//						if(blocks[blockX][blockY] != null) {
-//
-//							blocks[blockX][blockY].render(renderer, layer, tileWidth, tileHeight, xZoom, yZoom);
-//						}
-//					}
-//				}
-//			}
+			//			topLeftX = camera.x/blockPixelWidth;
+			//			topLeftY = camera.y/blockPixelHeight;
+			//			bottomRightX = (camera.x + camera.width)/blockPixelWidth + 1;
+			//			bottomRightY = (camera.y + camera.height)/blockPixelHeight + 1;
+			//
+			//			for(int blockY = topLeftY; blockY < bottomRightY; blockY++) {
+			//				for(int blockX = topLeftX; blockX < bottomRightX; blockX++) {
+			//					if(blockX >= 0 && blockY >= 0 && blockX < blocks.length && blockY < blocks.length) {
+			//						if(blocks[blockX][blockY] != null) {
+			//
+			//							blocks[blockX][blockY].render(renderer, layer, tileWidth, tileHeight, xZoom, yZoom);
+			//						}
+			//					}
+			//				}
+			//			}
 
 
 			for(int i = 0; i < objects.length; i++) {
@@ -289,9 +289,9 @@ public class Map {
 				mapFile.delete();
 			}
 			mapFile.createNewFile();
-			
+
 			PrintWriter pr = new PrintWriter(mapFile);
-			
+
 			pr.println("SEED:" +seed);
 
 			for(int i = 0; i < mappedTiles.size(); i++)	{
@@ -328,42 +328,74 @@ public class Map {
 		this.seed = seed;
 		this.mapWidthBlocks = mapWidthBlocks;
 		this.mapHeightBlocks = mapHeightBlocks;
-		
+
 		// Create random number generator with seed for world generation 
 		Random r = new Random(seed);
 
 		comments.put(0, "// layer, rotation, tileID, x, y");
 
-		// Create stone
-		for(int y=mapHeightBlocks/2; y<mapHeightBlocks; y++)
-			for(int x=0; x<mapWidthBlocks; x++)
-				setBlock(x, y, tileSet.findTile("Stone"), 1, 0);
-		
-		// Create dirt
-		for(int y=grassBlockY; y<mapHeightBlocks/2; y++)
-			for(int x=0; x<mapWidthBlocks; x++)
-				setBlock(x, y, tileSet.findTile("Dirt"), 1, 0);
-		
-		// Create grass
-		for(int y = grassBlockY*blockHeight; y < grassBlockY*blockHeight + 2; y++)
-			for(int x=0; x<mapWidthBlocks*blockWidth; x++)
-				setTile(1, 0, x, y, tileSet.findTile("Grass"));
-		
-		// Generate trees
-		for(int x=0; x<mapWidth; x++) {
-			if(r.nextInt(3) == 0) {
-				setTile(0, 0, x, grassBlockY*blockWidth-1, tileSet.findTile("TreeBottom"));
-				setTile(0, 0, x, grassBlockY*blockWidth-2, tileSet.findTile("TreeTop"));
+		grassBlockY = 2;
+
+		// Iterate through all blocks, from top to bottom, left to right
+		for(int xBlock = 0; xBlock < mapWidthBlocks; xBlock++) {
+			for(int yBlock = 0; yBlock < mapHeightBlocks; yBlock++) {
+
+				// Set stone below mapHeight/2
+				if(yBlock >= mapHeightBlocks/2 && yBlock < mapHeightBlocks)
+					setBlock(xBlock, yBlock, tileSet.findTile("Stone"), 1, 0);
+
+				// Set dirt from yGrassBlock to mapHeight/2
+				if(yBlock >= grassBlockY && yBlock < mapHeightBlocks/2)
+					setBlock(xBlock, yBlock, tileSet.findTile("Dirt"), 1, 0);
+
+				// Set top 2 blocks of dirt to grass
+				if(yBlock == grassBlockY)
+					for(int xTile = 0; xTile < blockWidth; xTile++) {
+						for(int yTile = 0; yTile < 2; yTile++)
+							setTile(1, 0, xBlock * blockWidth + xTile, yBlock * blockHeight + yTile, tileSet.findTile("Grass"));
+
+						// Set trees on top of grass
+						if(r.nextInt(4) == 0) {
+							setTile(0, 0, xBlock * blockWidth + xTile, grassBlockY * blockHeight - 1, tileSet.findTile("TreeBottom"));
+							setTile(0, 0, xBlock * blockWidth + xTile, grassBlockY * blockHeight - 2, tileSet.findTile("TreeTop"));
+						}
+					}
+
+
 			}
 		}
-		
-		
-		
+
+
+		//		// Create stone
+		//		for(int y=mapHeightBlocks/2; y<mapHeightBlocks; y++)
+		//			for(int x=0; x<mapWidthBlocks; x++)
+		//				setBlock(x, y, tileSet.findTile("Stone"), 1, 0);
+		//		
+		//		// Create dirt
+		//		for(int y=grassBlockY; y<mapHeightBlocks/2; y++)
+		//			for(int x=0; x<mapWidthBlocks; x++)
+		//				setBlock(x, y, tileSet.findTile("Dirt"), 1, 0);
+		//		
+		//		// Create grass
+		//		for(int y = grassBlockY*blockHeight; y < grassBlockY*blockHeight + 2; y++)
+		//			for(int x=0; x<mapWidthBlocks*blockWidth; x++)
+		//				setTile(1, 0, x, y, tileSet.findTile("Grass"));
+		//		
+		//		// Generate trees
+		//		for(int x=0; x<mapWidth; x++) {
+		//			if(r.nextInt(3) == 0) {
+		//				setTile(0, 0, x, grassBlockY*blockWidth-1, tileSet.findTile("TreeBottom"));
+		//				setTile(0, 0, x, grassBlockY*blockWidth-2, tileSet.findTile("TreeTop"));
+		//			}
+		//		}
+
+
+
 		System.out.println("World generated!");
-		
+
 	}
-	
-	
+
+
 	/**
 	 * @param tileTopLeftX
 	 * @param tileTopLeftY
@@ -404,9 +436,9 @@ public class Map {
 			return block.getTile(layer, tileX, tileY);
 	}
 
-	
-	
-	
+
+
+
 
 	/**
 	 * @param blockX
@@ -418,10 +450,10 @@ public class Map {
 	public void setBlock(int blockX, int blockY, int tileID, int layer, int rotation) {
 		setTiles(blockX * blockWidth, blockY * blockHeight, blockX * blockWidth + blockWidth - 1, blockY * blockHeight + blockHeight - 1, tileID, layer, rotation);
 	}
-	
-	
-	
-	
+
+
+
+
 	/**
 	 * @param layer
 	 * @param rotation
