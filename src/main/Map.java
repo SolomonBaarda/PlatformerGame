@@ -39,8 +39,8 @@ public class Map {
 	private int mapWidthBlocks, mapHeightBlocks;
 
 	private int seed;
-	private int grassBlockY = 2;
-	private boolean generated;
+	private int groundBlockY = 2;
+	private int dirtBlockThickness = 2;
 
 	private HashMap<Integer, String> comments;
 
@@ -173,7 +173,7 @@ public class Map {
 				}
 
 				generateWorld(mapWidthBlocks, mapHeightBlocks, seed);
-				saveMap();
+				//saveMap();
 			}
 
 			System.out.println(mapFile+ " loaded successfully!");
@@ -201,9 +201,9 @@ public class Map {
 		for(int blockY = topLeftY; blockY < bottomRightY; blockY++) {
 			for(int blockX = topLeftX; blockX < bottomRightX; blockX++) {
 				// if dirt level
-				if(blockY == grassBlockY)
+				if(blockY >= groundBlockY && blockY < groundBlockY + dirtBlockThickness)
 					block = blockBackgroundGround;
-				else if(blockY >= grassBlockY + 1)
+				else if(blockY >= groundBlockY + dirtBlockThickness)
 					block = blockBackgroundStone;
 				else {
 					block = blockBackgroundSky;
@@ -300,7 +300,7 @@ public class Map {
 				}
 
 				MappedTile tile = mappedTiles.get(i);
-				pr.println(tile.getLayer()+ "," +tile.getRotation()+ "," +tile.getId()+ "," +tile.getX()+ "," +tile.getY());
+				pr.println(tile.getLayer()+ "," +tile.getRotation()+ "," +tile.getID()+ "," +tile.getX()+ "," +tile.getY());
 
 				currentLine++;
 			}
@@ -333,61 +333,85 @@ public class Map {
 		Random r = new Random(seed);
 
 		comments.put(0, "// layer, rotation, tileID, x, y");
-
-		grassBlockY = 2;
+		
+		int maxGroundTileY = groundBlockY * blockHeight;
+		int minGroundTileY = maxGroundTileY + blockHeight - 1;
+		int groundTileY = minGroundTileY;
+		
+		int grassThickness = 2;
 
 		// Iterate through all blocks, from top to bottom, left to right
 		for(int xBlock = 0; xBlock < mapWidthBlocks; xBlock++) {
+
+			// If top block, increment groundTileY by -1, 0, +1
+			if(groundTileY > maxGroundTileY && groundTileY < maxGroundTileY + blockHeight - grassThickness)
+				groundTileY += r.nextInt(3) - 1;
+
+			// First block always at maxGrassHeight
+			else if(groundTileY == maxGroundTileY && xBlock == 0);
+
+			// If top of block, increment groundTileY by 0, 1
+			else if(groundTileY == maxGroundTileY)
+				groundTileY += r.nextInt(2);
+
+			// If bottom of block, increment groundTileY by -1, 0
+			else if(groundTileY == maxGroundTileY + blockHeight - grassThickness)
+				groundTileY += r.nextInt(2) - 1;
+
+
 			for(int yBlock = 0; yBlock < mapHeightBlocks; yBlock++) {
 
-				// Set stone below mapHeight/2
-				if(yBlock >= mapHeightBlocks/2 && yBlock < mapHeightBlocks)
+				// Set stone below groundBlockY + dirtBlockThickness
+				if(yBlock >= groundBlockY + dirtBlockThickness && yBlock < mapHeightBlocks)
 					setBlock(xBlock, yBlock, tileSet.findTile("Stone"), 1, 0);
 
-				// Set dirt from yGrassBlock to mapHeight/2
-				if(yBlock >= grassBlockY && yBlock < mapHeightBlocks/2)
+				// Set dirt from yGroundBlock to dirtBlockThickness
+				if(yBlock >= groundBlockY && yBlock < groundBlockY + dirtBlockThickness)
 					setBlock(xBlock, yBlock, tileSet.findTile("Dirt"), 1, 0);
 
-				// Set top 2 blocks of dirt to grass
-				if(yBlock == grassBlockY)
+
+				// Add grass layer, and trees
+				if(yBlock == groundTileY / blockHeight) {
+					// Iterate through all tiles in block, top to bottom, left to right
 					for(int xTile = 0; xTile < blockWidth; xTile++) {
-						for(int yTile = 0; yTile < 2; yTile++)
-							setTile(1, 0, xBlock * blockWidth + xTile, yBlock * blockHeight + yTile, tileSet.findTile("Grass"));
+						for(int yTile = groundTileY % blockHeight; yTile < groundTileY % blockHeight + grassThickness; yTile++) {
+							// Set top 2 blocks of dirt to grass
+							// Make some grass different tile texture
+							if(r.nextInt(3) == 0)
+								setTile(1, 0, xBlock * blockWidth + xTile, yBlock * blockHeight + yTile, tileSet.findTile("Grass"));
+							else
+								setTile(1, 0, xBlock * blockWidth + xTile, yBlock * blockHeight + yTile, tileSet.findTile("Grass2"));
+
+							// Make bottom of grass inconsistent 
+							if(r.nextInt(2) == 0)
+								setTile(1, 0, xBlock * blockWidth + xTile, yBlock * blockHeight + yTile + 1, tileSet.findTile("Grass"));
+
+							// Remove any dirt from above grass
+							for(int y = groundTileY; y >= maxGroundTileY; y--) {
+								MappedTile tile = getTile(1, xBlock * blockWidth + xTile, y);
+
+								if(tile != null && tile.getID() == tileSet.findTile("Dirt")) {
+
+									System.out.println("Found");
+									removeTile(tile);
+
+
+								}
+							}
+						}
 
 						// Set trees on top of grass
 						if(r.nextInt(4) == 0) {
-							setTile(0, 0, xBlock * blockWidth + xTile, grassBlockY * blockHeight - 1, tileSet.findTile("TreeBottom"));
-							setTile(0, 0, xBlock * blockWidth + xTile, grassBlockY * blockHeight - 2, tileSet.findTile("TreeTop"));
+							setTile(0, 0, xBlock * blockWidth + xTile, groundTileY - 1, tileSet.findTile("TreeBottom"));
+							setTile(0, 0, xBlock * blockWidth + xTile, groundTileY - 2, tileSet.findTile("TreeTop"));
 						}
 					}
+
+				}
 
 
 			}
 		}
-
-
-		//		// Create stone
-		//		for(int y=mapHeightBlocks/2; y<mapHeightBlocks; y++)
-		//			for(int x=0; x<mapWidthBlocks; x++)
-		//				setBlock(x, y, tileSet.findTile("Stone"), 1, 0);
-		//		
-		//		// Create dirt
-		//		for(int y=grassBlockY; y<mapHeightBlocks/2; y++)
-		//			for(int x=0; x<mapWidthBlocks; x++)
-		//				setBlock(x, y, tileSet.findTile("Dirt"), 1, 0);
-		//		
-		//		// Create grass
-		//		for(int y = grassBlockY*blockHeight; y < grassBlockY*blockHeight + 2; y++)
-		//			for(int x=0; x<mapWidthBlocks*blockWidth; x++)
-		//				setTile(1, 0, x, y, tileSet.findTile("Grass"));
-		//		
-		//		// Generate trees
-		//		for(int x=0; x<mapWidth; x++) {
-		//			if(r.nextInt(3) == 0) {
-		//				setTile(0, 0, x, grassBlockY*blockWidth-1, tileSet.findTile("TreeBottom"));
-		//				setTile(0, 0, x, grassBlockY*blockWidth-2, tileSet.findTile("TreeTop"));
-		//			}
-		//		}
 
 
 
@@ -537,7 +561,18 @@ public class Map {
 	}
 
 
+	/**
+	 * @param tile
+	 */
+	public void removeTile(MappedTile tile) {
+		removeTile(tile.getLayer(), tile.getX(), tile.getY());
+	}
 
+	/**
+	 * @param layer
+	 * @param tileX
+	 * @param tileY
+	 */
 	public void removeTile(int layer, int tileX, int tileY) {
 
 		// loop through all mapped tiles
@@ -671,7 +706,7 @@ public class Map {
 
 				for(int i = 0; i < mappedTiles.size(); i++) {
 					MappedTile mappedTile = mappedTiles.get(i);
-					tileSet.renderTiles(mappedTile.getId(), renderer, mappedTile.getRotation(), mappedTile.getX() * tileWidth, 
+					tileSet.renderTiles(mappedTile.getID(), renderer, mappedTile.getRotation(), mappedTile.getX() * tileWidth, 
 							mappedTile.getY() * tileHeight, xZoom, yZoom);
 				}
 			}
@@ -728,7 +763,7 @@ public class Map {
 
 
 
-		public int getId() {
+		public int getID() {
 			return id;
 		}
 
@@ -740,33 +775,25 @@ public class Map {
 			return x;
 		}
 
-		public void setX(int x) {
-			this.x = x;
-		}
+
 
 		public int getY() {
 			return y;
 		}
 
-		public void setY(int y) {
-			this.y = y;
-		}
+
 
 		public int getLayer() {
 			return layer;
 		}
 
-		public void setLayer(int layer) {
-			this.layer = layer;
-		}
+
 
 		public int getRotation() {
 			return rotation;
 		}
 
-		public void setRotation(int rotation) {
-			this.rotation = rotation;
-		}
+
 
 
 
