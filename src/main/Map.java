@@ -191,7 +191,7 @@ public class Map {
 	public void render(RenderHandler renderer, GameObject[] objects, int xZoom, int yZoom) {
 		// Render background
 		Rectangle camera = renderer.getCamera();
-		Sprite block;
+		Sprite blockBackground;
 
 		int topLeftX = camera.x/blockPixelWidth;
 		int topLeftY = camera.y/blockPixelHeight;
@@ -202,15 +202,15 @@ public class Map {
 			for(int blockX = topLeftX; blockX < bottomRightX; blockX++) {
 				// Dirt level
 				if(blockY > groundBlockY && blockY < groundBlockY + dirtBlockThickness)
-					block = blockBackgroundGround;
+					blockBackground = blockBackgroundGround;
 				// Stone level
 				else if(blockY >= groundBlockY + dirtBlockThickness)
-					block = blockBackgroundStone;
+					blockBackground = blockBackgroundStone;
 				// Sky
 				else {
-					block = blockBackgroundSky;
+					blockBackground = blockBackgroundSky;
 				}
-				renderer.renderSprite(block, blockX*blockPixelWidth, blockY*blockPixelHeight, xZoom, yZoom, false);
+				renderer.renderSprite(blockBackground, blockX*blockPixelWidth, blockY*blockPixelHeight, xZoom, yZoom, false);
 			}
 		}
 
@@ -362,8 +362,13 @@ public class Map {
 			for(int yBlock = 0; yBlock < mapHeightBlocks; yBlock++) {
 
 				// Set stone below groundBlockY + dirtBlockThickness
-				if(yBlock >= groundBlockY + dirtBlockThickness && yBlock < mapHeightBlocks)
+				if(yBlock >= groundBlockY + dirtBlockThickness && yBlock < mapHeightBlocks) {
 					setBlock(xBlock, yBlock, tileSet.findTile("Stone"), 1, 0);
+					
+					setTiles(xBlock * blockWidth, yBlock * blockHeight, xBlock * blockWidth + 2, yBlock * blockHeight + 2, tileSet.findTile("Iron"), 1, 0);
+					setTiles(xBlock * blockWidth + 4, yBlock * blockHeight + 4, xBlock * blockWidth + 6, yBlock * blockHeight + 6, tileSet.findTile("Gold"), 1, 0);
+					
+				}
 
 				// Set dirt from yGroundBlock to dirtBlockThickness
 				if(yBlock >= groundBlockY && yBlock < groundBlockY + dirtBlockThickness)
