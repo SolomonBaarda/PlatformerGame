@@ -200,11 +200,13 @@ public class Map {
 
 		for(int blockY = topLeftY; blockY < bottomRightY; blockY++) {
 			for(int blockX = topLeftX; blockX < bottomRightX; blockX++) {
-				// if dirt level
-				if(blockY >= groundBlockY && blockY < groundBlockY + dirtBlockThickness)
+				// Dirt level
+				if(blockY > groundBlockY && blockY < groundBlockY + dirtBlockThickness)
 					block = blockBackgroundGround;
+				// Stone level
 				else if(blockY >= groundBlockY + dirtBlockThickness)
 					block = blockBackgroundStone;
+				// Sky
 				else {
 					block = blockBackgroundSky;
 				}
@@ -333,30 +335,28 @@ public class Map {
 		Random r = new Random(seed);
 
 		comments.put(0, "// layer, rotation, tileID, x, y");
-		
-		int maxGroundTileY = groundBlockY * blockHeight;
-		int minGroundTileY = maxGroundTileY + blockHeight - 1;
-		int groundTileY = minGroundTileY;
-		
+
 		int grassThickness = 2;
+
+		int maxGroundTileY = groundBlockY * blockHeight;
+		int minGroundTileY = maxGroundTileY + blockHeight - grassThickness - 1;
+		int groundTileY = minGroundTileY;
 
 		// Iterate through all blocks, from top to bottom, left to right
 		for(int xBlock = 0; xBlock < mapWidthBlocks; xBlock++) {
 
-			// If top block, increment groundTileY by -1, 0, +1
-			if(groundTileY > maxGroundTileY && groundTileY < maxGroundTileY + blockHeight - grassThickness)
-				groundTileY += r.nextInt(3) - 1;
 
-			// First block always at maxGrassHeight
-			else if(groundTileY == maxGroundTileY && xBlock == 0);
+			// If at min, increment groundTileY by -1, 0
+			if(groundTileY == minGroundTileY)
+				groundTileY += r.nextInt(2) - 1;
 
-			// If top of block, increment groundTileY by 0, 1
+			// If at max, increment groundTileY by 0, 1
 			else if(groundTileY == maxGroundTileY)
 				groundTileY += r.nextInt(2);
 
-			// If bottom of block, increment groundTileY by -1, 0
-			else if(groundTileY == maxGroundTileY + blockHeight - grassThickness)
-				groundTileY += r.nextInt(2) - 1;
+			// If top block, increment groundTileY by -1, 0, +1
+			else if(groundTileY > maxGroundTileY && groundTileY < minGroundTileY)
+				groundTileY += r.nextInt(3) - 1;
 
 
 			for(int yBlock = 0; yBlock < mapHeightBlocks; yBlock++) {
@@ -369,34 +369,40 @@ public class Map {
 				if(yBlock >= groundBlockY && yBlock < groundBlockY + dirtBlockThickness)
 					setBlock(xBlock, yBlock, tileSet.findTile("Dirt"), 1, 0);
 
-
 				// Add grass layer, and trees
-				if(yBlock == groundTileY / blockHeight) {
+				if(yBlock == groundBlockY) {
 					// Iterate through all tiles in block, top to bottom, left to right
 					for(int xTile = 0; xTile < blockWidth; xTile++) {
 						for(int yTile = groundTileY % blockHeight; yTile < groundTileY % blockHeight + grassThickness; yTile++) {
 							// Set top 2 blocks of dirt to grass
 							// Make some grass different tile texture
+							int grassType;
+							
 							if(r.nextInt(3) == 0)
-								setTile(1, 0, xBlock * blockWidth + xTile, yBlock * blockHeight + yTile, tileSet.findTile("Grass"));
+								grassType = tileSet.findTile("Grass2");
 							else
-								setTile(1, 0, xBlock * blockWidth + xTile, yBlock * blockHeight + yTile, tileSet.findTile("Grass2"));
+								grassType = tileSet.findTile("Grass");
+							
+							setTile(1, 0, xBlock * blockWidth + xTile, yBlock * blockHeight + yTile, grassType);
 
 							// Make bottom of grass inconsistent 
-							if(r.nextInt(2) == 0)
-								setTile(1, 0, xBlock * blockWidth + xTile, yBlock * blockHeight + yTile + 1, tileSet.findTile("Grass"));
+							if(r.nextInt(2) == 0) {
+								// Make some grass different tile texture
+								if(r.nextInt(3) == 0)
+									grassType = tileSet.findTile("Grass2");
+								else
+									grassType = tileSet.findTile("Grass");
+								
+								setTile(1, 0, xBlock * blockWidth + xTile, yBlock * blockHeight + yTile + 1, grassType);
+							}
 
 							// Remove any dirt from above grass
 							for(int y = groundTileY; y >= maxGroundTileY; y--) {
 								MappedTile tile = getTile(1, xBlock * blockWidth + xTile, y);
-
-								if(tile != null && tile.getID() == tileSet.findTile("Dirt")) {
-
-									System.out.println("Found");
+								// Remove dirt tiles
+								if(tile != null && tile.getID() == tileSet.findTile("Dirt")) 
 									removeTile(tile);
 
-
-								}
 							}
 						}
 
