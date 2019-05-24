@@ -122,7 +122,7 @@ public class Map {
 					else if(line.startsWith("SEED")){
 						String[] seed = line.split(":");
 						this.seed = Integer.parseInt(seed[1]);
-						comments.put(0, "SEED:" +seed);
+						//comments.put(0, "SEED:" +seed);
 					}
 
 				}
@@ -145,10 +145,10 @@ public class Map {
 
 			blockStartX = minX;
 			blockStartY = minY;
-			int blockSizeX = (maxX + blockWidth) - minX;
-			int blockSizeY = (maxY + blockHeight) - minY;
+//			int blockSizeX = (maxX + blockWidth) - minX;
+//			int blockSizeY = (maxY + blockHeight) - minY;
 
-			blocks = new Block[blockSizeX][blockSizeY];
+			blocks = new Block[mapWidthBlocks][mapHeightBlocks];
 
 			// Loop through all mappedTiles in level and add them to blocks
 			for(int i = 0; i < mappedTiles.size(); i++) {
@@ -156,8 +156,6 @@ public class Map {
 
 				int blockX = (mappedTile.getX() - minX) / blockWidth;
 				int blockY = (mappedTile.getY() - minY) / blockHeight;
-
-				assert(blockX >= 0 && blockX < blocks.length && blockY >= 0 && blockY <= blocks[0].length);
 
 				if(blocks[blockX][blockY] == null)
 					blocks[blockX][blockY] = new Block();
@@ -189,16 +187,17 @@ public class Map {
 
 
 	public void render(RenderHandler renderer, GameObject[] objects, int xZoom, int yZoom) {
-		// Render background
 		Rectangle camera = renderer.getCamera();
 		Sprite blockBackground;
 
+		// values for blocks on edges of screen 
 		int topLeftX = camera.x/blockPixelWidth;
 		int topLeftY = camera.y/blockPixelHeight;
 		int bottomRightX = (camera.x + camera.width)/blockPixelWidth + 1;
 		int bottomRightY = (camera.y + camera.height)/blockPixelHeight + 1;
 
-		for(int blockY = topLeftY; blockY < bottomRightY; blockY++) {
+		// Render block backgrounds
+		for(int blockY = topLeftY; blockY < bottomRightY; blockY++) 
 			for(int blockX = topLeftX; blockX < bottomRightX; blockX++) {
 				// Dirt level
 				if(blockY > groundBlockY && blockY < groundBlockY + dirtBlockThickness)
@@ -212,74 +211,37 @@ public class Map {
 				}
 				renderer.renderSprite(blockBackground, blockX*blockPixelWidth, blockY*blockPixelHeight, xZoom, yZoom, false);
 			}
-		}
+		
 
-
+		
+		/*
+		 * Bug where block wont load when map has been saved and will once a tile
+		 * is placed in top block. 
+		 */
+		
+		
+		
+		// Iterate through all layers
 		for(int layer = 0; layer <= numLayers; layer++) {
-			topLeftX = camera.x;
-			topLeftY = camera.y;
-			bottomRightX = camera.x + camera.width;
-			bottomRightY = camera.y + camera.height;
+			// Render block on screen
+			for(int blockY = topLeftY; blockY <= bottomRightY; blockY++) 
+				for(int blockX = topLeftX; blockX <= bottomRightX; blockX++) 
+					if(blockX >= 0 && blockY >= 0 && blockX < blocks.length && blockY < blocks.length) 
+						if(blocks[blockX][blockY] != null) 
+							blocks[blockX][blockY].render(renderer, layer, tileWidth, tileHeight, xZoom, yZoom);
 
-			int leftBlockX = (topLeftX/tileWidth - blockStartX) / blockWidth;
-
-			int blockX = leftBlockX;
-			int blockY = (topLeftY/tileHeight - blockStartY) / blockHeight;
-
-			int pixelX = topLeftX;
-			int pixelY = topLeftY;
-
-			while(pixelX < bottomRightX && pixelY < bottomRightY) {
-				if(blockX >= 0 && blockY >= 0 && blockX < blocks.length && blockY < blocks.length) {
-					if(blocks[blockX][blockY] != null) {
-						blocks[blockX][blockY].render(renderer, layer, tileWidth, tileHeight, xZoom, yZoom);
-					}
-				}
-
-				blockX++;
-				pixelX += blockPixelWidth;
-
-				if(pixelX > bottomRightX) {
-					pixelX = topLeftX;
-					blockX = leftBlockX;
-					blockY++;
-					pixelY += blockPixelHeight;
-					if(pixelY > bottomRightY)
-						break;
-				}
-			}
-
-			//			topLeftX = camera.x/blockPixelWidth;
-			//			topLeftY = camera.y/blockPixelHeight;
-			//			bottomRightX = (camera.x + camera.width)/blockPixelWidth + 1;
-			//			bottomRightY = (camera.y + camera.height)/blockPixelHeight + 1;
-			//
-			//			for(int blockY = topLeftY; blockY < bottomRightY; blockY++) {
-			//				for(int blockX = topLeftX; blockX < bottomRightX; blockX++) {
-			//					if(blockX >= 0 && blockY >= 0 && blockX < blocks.length && blockY < blocks.length) {
-			//						if(blocks[blockX][blockY] != null) {
-			//
-			//							blocks[blockX][blockY].render(renderer, layer, tileWidth, tileHeight, xZoom, yZoom);
-			//						}
-			//					}
-			//				}
-			//			}
-
-
-			for(int i = 0; i < objects.length; i++) {
+			// Render game objects
+			for(int i = 0; i < objects.length; i++) 
 				if(objects[i].getLayer() == layer)
 					objects[i].render(renderer, xZoom, yZoom);
 
-			}
-
 		}
+		// Render objects at front - eg hud etc
 		for(int i = 0; i < objects.length; i++) 
 			if(objects[i].getLayer() == Integer.MAX_VALUE)
 				objects[i].render(renderer, xZoom, yZoom);
 
-
 	}
-
 
 
 
@@ -331,6 +293,8 @@ public class Map {
 		this.mapWidthBlocks = mapWidthBlocks;
 		this.mapHeightBlocks = mapHeightBlocks;
 
+		seed = 1;
+
 		// Create random number generator with seed for world generation 
 		Random r = new Random(seed);
 
@@ -344,7 +308,6 @@ public class Map {
 
 		// Iterate through all blocks, from top to bottom, left to right
 		for(int xBlock = 0; xBlock < mapWidthBlocks; xBlock++) {
-
 
 			// If at min, increment groundTileY by -1, 0
 			if(groundTileY == minGroundTileY)
@@ -364,10 +327,10 @@ public class Map {
 				// Set stone below groundBlockY + dirtBlockThickness
 				if(yBlock >= groundBlockY + dirtBlockThickness && yBlock < mapHeightBlocks) {
 					setBlock(xBlock, yBlock, tileSet.findTile("Stone"), 1, 0);
-					
+
 					setTiles(xBlock * blockWidth, yBlock * blockHeight, xBlock * blockWidth + 2, yBlock * blockHeight + 2, tileSet.findTile("Iron"), 1, 0);
 					setTiles(xBlock * blockWidth + 4, yBlock * blockHeight + 4, xBlock * blockWidth + 6, yBlock * blockHeight + 6, tileSet.findTile("Gold"), 1, 0);
-					
+
 				}
 
 				// Set dirt from yGroundBlock to dirtBlockThickness
@@ -382,12 +345,12 @@ public class Map {
 							// Set top 2 blocks of dirt to grass
 							// Make some grass different tile texture
 							int grassType;
-							
+
 							if(r.nextInt(3) == 0)
 								grassType = tileSet.findTile("Grass2");
 							else
 								grassType = tileSet.findTile("Grass");
-							
+
 							setTile(1, 0, xBlock * blockWidth + xTile, yBlock * blockHeight + yTile, grassType);
 
 							// Make bottom of grass inconsistent 
@@ -397,7 +360,7 @@ public class Map {
 									grassType = tileSet.findTile("Grass2");
 								else
 									grassType = tileSet.findTile("Grass");
-								
+
 								setTile(1, 0, xBlock * blockWidth + xTile, yBlock * blockHeight + yTile + 1, grassType);
 							}
 
