@@ -109,7 +109,7 @@ public class Game extends JFrame implements Runnable {
 		//		for(String fileNames : file.list()) System.out.println(fileNames);
 
 		// Load tile list
-		tiles = new Tiles( new File("assets/tiles/TileList.txt"), sheet);
+		tiles = new Tiles(new File("assets/tiles/TileList.txt"), sheet);
 
 
 
@@ -126,7 +126,7 @@ public class Game extends JFrame implements Runnable {
 		map = new Map(mapFile, tiles, blockBackgroundSky, blockBackgroundGround, blockBackgroundStone, mapWidth, mapHeight, xZoom, yZoom);
 
 		// Load SDK GUI
-		GUIButton[] buttons = new GUIButton[tiles.size() + map.numLayers +1];
+		GUIButton[] buttons = new GUIButton[tiles.size() + map.getNumLayers() + 1 + 10];
 		Sprite[] tileSprites = tiles.getSprites();
 
 		// Tile buttons
@@ -136,9 +136,15 @@ public class Game extends JFrame implements Runnable {
 		}
 
 		// Layer buttons 
-		for(int i = 0; i <= map.numLayers; i++) {
+		for(int i = 0; i <= map.getNumLayers(); i++) {
 			Rectangle tileRectangle = new Rectangle(i*(tilePixels*xZoom + 2) + 50, 0, tilePixels * xZoom, tilePixels * yZoom);
 			buttons[tiles.size() + i] = new LayerButton(this, i, tileRectangle);
+		}
+		
+		// Hotbar buttons
+		for(int i = 0; i < 10; i++) {
+			Rectangle tileRectangle = new Rectangle(renderer.getCamera().width / 4 + i * 60, renderer.getCamera().height - 75, 50, 50);
+			buttons[tiles.size() + map.getNumLayers() + 1 + i] = new HotbarButton(this, null, tileRectangle);
 		}
 
 		// Create GUI

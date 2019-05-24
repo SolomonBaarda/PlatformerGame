@@ -43,9 +43,6 @@ public class Player implements GameObject {
 
 		updateDirection();
 
-		int x = 0;
-		int y = 0;
-
 		// If player file does'nt exist - create new player
 		if(!playerFile.exists()) {
 			try {

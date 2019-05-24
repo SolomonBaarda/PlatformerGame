@@ -5,7 +5,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Random;
 import java.util.Scanner;
 
@@ -33,7 +32,7 @@ public class Map {
 	private final int blockPixelWidth = blockWidth * tileWidth;
 	private final int blockPixelHeight = blockHeight * tileHeight;
 
-	public int numLayers = 3;
+	private int numLayers;
 
 	private int mapWidth, mapHeight;
 	private int mapWidthBlocks, mapHeightBlocks;
@@ -41,8 +40,6 @@ public class Map {
 	private int seed;
 	private int groundBlockY = 2;
 	private int dirtBlockThickness = 2;
-
-	private HashMap<Integer, String> comments;
 
 	/**
 	 * @param mapFile
@@ -73,23 +70,18 @@ public class Map {
 		int maxX = Integer.MIN_VALUE;
 		int maxY = Integer.MIN_VALUE;
 
-
 		try {
 			Scanner s = new Scanner(mapFile);
-			int currentLine = 0;
-
 			mappedTiles = new ArrayList<>();
-			comments = new HashMap<>();
 
 			while(s.hasNextLine()) {
-
 				// read each line and create instances of tile
 				String line = s.nextLine();
 
 				// not comments 
 				if(!line.startsWith("//")) {
 
-					if(!line.startsWith("SEED")) {
+					if(!line.startsWith("SEED") && !line.startsWith("SIZE")) {
 						String[] splitLine = line.split(",");
 						if(splitLine.length == 5) {
 							MappedTile mappedTile = new MappedTile(
@@ -122,16 +114,17 @@ public class Map {
 					else if(line.startsWith("SEED")){
 						String[] seed = line.split(":");
 						this.seed = Integer.parseInt(seed[1]);
-						//comments.put(0, "SEED:" +seed);
+					}
+					else if(line.startsWith("SIZE")){
+						String[] size = line.split(":");
+						this.mapWidthBlocks = Integer.parseInt(size[1]);
+						this.mapHeightBlocks = Integer.parseInt(size[2]);
 					}
 
 				}
-				// do comments 
 				else {
-					comments.put(currentLine, line);
+					// Do nothing for comments
 				}
-
-				currentLine++;
 
 			}
 			s.close();
@@ -145,8 +138,6 @@ public class Map {
 
 			blockStartX = minX;
 			blockStartY = minY;
-//			int blockSizeX = (maxX + blockWidth) - minX;
-//			int blockSizeY = (maxY + blockHeight) - minY;
 
 			blocks = new Block[mapWidthBlocks][mapHeightBlocks];
 
@@ -163,19 +154,17 @@ public class Map {
 				blocks[blockX][blockY].addTile(mappedTile);
 			}
 
-			if(mappedTiles.isEmpty() && comments.isEmpty()) {
+			// If world is empty
+			if(mappedTiles.isEmpty()) {
 				System.out.println("World is empty. Generating world!");
 
-				if(seed == 0) {
+				if(seed == 0) 
 					seed = (new Random()).nextInt();
-				}
 
 				generateWorld(mapWidthBlocks, mapHeightBlocks, seed);
 				//saveMap();
 			}
-
 			System.out.println(mapFile+ " loaded successfully!");
-
 
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
@@ -246,8 +235,6 @@ public class Map {
 
 
 	public void saveMap() {
-		int currentLine = 0;
-
 		try {
 			if(mapFile.exists()) {
 				mapFile.delete();
@@ -257,23 +244,21 @@ public class Map {
 			PrintWriter pr = new PrintWriter(mapFile);
 
 			pr.println("SEED:" +seed);
+			pr.println("SIZE:" +mapWidthBlocks+ ":" +mapHeightBlocks);
+			pr.print("// layer, rotation, tileID, x, y");
 
 			for(int i = 0; i < mappedTiles.size(); i++)	{
-				if(comments.containsKey(currentLine)) {
-					pr.println(comments.get(currentLine));
-				}
-
 				MappedTile tile = mappedTiles.get(i);
 				pr.println(tile.getLayer()+ "," +tile.getRotation()+ "," +tile.getID()+ "," +tile.getX()+ "," +tile.getY());
-
-				currentLine++;
 			}
+			
 			pr.close();
 			System.out.println(mapFile+ " saved succesfully!");
 
 		}
 		catch(IOException e) {
 			e.printStackTrace();
+			System.out.println("Map could not be saved.");
 		}
 
 	}
@@ -297,8 +282,6 @@ public class Map {
 
 		// Create random number generator with seed for world generation 
 		Random r = new Random(seed);
-
-		comments.put(0, "// layer, rotation, tileID, x, y");
 
 		int grassThickness = 2;
 
@@ -720,6 +703,11 @@ public class Map {
 
 
 	}
+	
+	
+	public int getNumLayers() {
+		return numLayers;
+	}
 
 
 	// TileID in the tileSet and position of the tile on the map
@@ -737,6 +725,8 @@ public class Map {
 
 
 
+		
+		
 		public int getID() {
 			return id;
 		}
