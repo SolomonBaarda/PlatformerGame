@@ -5,6 +5,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.Random;
 import java.util.Scanner;
 
@@ -85,15 +87,15 @@ public class Map {
 						String[] splitLine = line.split(",");
 						if(splitLine.length == 5) {
 							MappedTile mappedTile = new MappedTile(
-									// Layer
+									// x
 									Integer.parseInt(splitLine[0].trim()), 
-									// Rotation
+									// y
 									Integer.parseInt(splitLine[1].trim()), 
-									// TileID
+									// Layer
 									Integer.parseInt(splitLine[2].trim()),
-									// x position
+									// Rotation
 									Integer.parseInt(splitLine[3].trim()),
-									// y position
+									// TileID
 									Integer.parseInt(splitLine[4].trim()) );
 
 							if(mappedTile.getX() < minX)
@@ -200,22 +202,22 @@ public class Map {
 				}
 				renderer.renderSprite(blockBackground, blockX*blockPixelWidth, blockY*blockPixelHeight, xZoom, yZoom, false);
 			}
-		
 
-		
+
+
 		/*
 		 * Bug where block wont load when map has been saved and will once a tile
 		 * is placed in top block. 
 		 */
-		
-		
-		
+
+
+
 		// Iterate through all layers
 		for(int layer = 0; layer <= numLayers; layer++) {
 			// Render block on screen
 			for(int blockY = topLeftY; blockY <= bottomRightY; blockY++) 
 				for(int blockX = topLeftX; blockX <= bottomRightX; blockX++) 
-					if(blockX >= 0 && blockY >= 0 && blockX < blocks.length && blockY < blocks.length) 
+					if(blockX >= 0 && blockY >= 0 && blockX < mapWidthBlocks && blockY < mapHeightBlocks) 
 						if(blocks[blockX][blockY] != null) 
 							blocks[blockX][blockY].render(renderer, layer, tileWidth, tileHeight, xZoom, yZoom);
 
@@ -234,7 +236,13 @@ public class Map {
 
 
 
+	/**
+	 * Method that saves the current map to it's file.
+	 */
 	public void saveMap() {
+		// doesn't work
+		//sortMapList();
+		
 		try {
 			if(mapFile.exists()) {
 				mapFile.delete();
@@ -245,13 +253,13 @@ public class Map {
 
 			pr.println("SEED:" +seed);
 			pr.println("SIZE:" +mapWidthBlocks+ ":" +mapHeightBlocks);
-			pr.print("// layer, rotation, tileID, x, y");
+			pr.println("// x, y, layer, rotation, tileID");
 
 			for(int i = 0; i < mappedTiles.size(); i++)	{
 				MappedTile tile = mappedTiles.get(i);
-				pr.println(tile.getLayer()+ "," +tile.getRotation()+ "," +tile.getID()+ "," +tile.getX()+ "," +tile.getY());
+				pr.println(tile.getX()+ "," +tile.getY()+ "," +tile.getLayer()+ "," +tile.getRotation()+ "," +tile.getID());
 			}
-			
+
 			pr.close();
 			System.out.println(mapFile+ " saved succesfully!");
 
@@ -262,6 +270,22 @@ public class Map {
 		}
 
 	}
+	
+	
+	private void sortMapList() {
+		// If this small, already sorted
+		if(mappedTiles.size() <= 1)
+			return;
+
+		// If not sorted
+		else {
+			mappedTiles.sort(new MappedTileComparator<MappedTile>());
+		}
+		
+	}
+
+
+
 
 
 
@@ -458,7 +482,7 @@ public class Map {
 		}
 
 		// if we get here, the space is empty
-		MappedTile mappedTile = new MappedTile(layer, rotation, tileID, tileX, tileY);
+		MappedTile mappedTile = new MappedTile(tileX, tileY, layer, rotation, tileID);
 		// add to mapped tiles
 		mappedTiles.add(mappedTile);
 
@@ -643,6 +667,44 @@ public class Map {
 		return mapHeight;
 	}
 
+	public int getNumLayers() {
+		return numLayers;
+	}
+
+
+
+
+
+
+	private class MappedTileComparator<T> implements Comparator<T> {
+
+		@Override
+		public int compare(T i, T j) {
+
+			if(i instanceof MappedTile && j instanceof MappedTile) {
+				if( ((MappedTile) i).getX() < ((MappedTile) j).getX() || ((MappedTile) i).getY() < ((MappedTile) j).getY() )
+					return 1;
+				else if( ((MappedTile) i).getX() == ((MappedTile) j).getX() && ((MappedTile) i).getY() == ((MappedTile) j).getY() 
+						&& ((MappedTile) i).getLayer() < ((MappedTile) j).getLayer() )
+					return 1;
+				else
+					return -1;
+			}
+			return 0;
+			
+			
+		}
+
+
+
+
+
+	}
+
+
+
+
+
 	// represents 8x8 block of tiles
 	@SuppressWarnings("unchecked")
 	private class Block {
@@ -703,11 +765,9 @@ public class Map {
 
 
 	}
-	
-	
-	public int getNumLayers() {
-		return numLayers;
-	}
+
+
+
 
 
 	// TileID in the tileSet and position of the tile on the map
@@ -715,7 +775,7 @@ public class Map {
 
 		private int layer, rotation, id, x, y;
 
-		public MappedTile(int layer, int rotation, int id, int x, int y) {
+		public MappedTile(int x, int y, int layer, int rotation, int id) {
 			this.layer = layer;
 			this.rotation = rotation;
 			this.id = id;
@@ -725,8 +785,8 @@ public class Map {
 
 
 
-		
-		
+
+
 		public int getID() {
 			return id;
 		}
@@ -756,10 +816,6 @@ public class Map {
 		public int getRotation() {
 			return rotation;
 		}
-
-
-
-
 
 	}
 
