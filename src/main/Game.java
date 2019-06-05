@@ -42,8 +42,9 @@ public class Game extends JFrame implements Runnable {
 	private RenderHandler renderer;
 
 	private int WIDTH, HEIGHT;
-	public final int xZoom = 3;
-	public final int yZoom = 3;
+	
+	public final int xZoom = 2;
+	public final int yZoom = 2;
 	public final static int tilePixels = 16;
 
 	private SpriteSheet sheet;
@@ -121,8 +122,8 @@ public class Game extends JFrame implements Runnable {
 		Sprite blockBackgroundGround = new Sprite(loadImage("/sprites/blockBackgroundGround.png"));
 		Sprite blockBackgroundStone = new Sprite(loadImage("/sprites/blockBackgroundStone.png"));
 		
-		int mapWidth = 8;
-		int mapHeight = 6;
+		int mapWidth = 16;
+		int mapHeight = 8;
 		map = new Map(mapFile, tiles, blockBackgroundSky, blockBackgroundGround, blockBackgroundStone, mapWidth, mapHeight, xZoom, yZoom);
 
 		// Load SDK GUI

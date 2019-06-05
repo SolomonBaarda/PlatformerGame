@@ -24,8 +24,8 @@ public class Map {
 	private int blockStartX, blockStartY;
 
 	// zoom 3 by default, gets updated when constructor called
-	private int xZoom = 3;
-	private int yZoom = 3;
+	private int xZoom = 2;
+	private int yZoom = 2;
 	private final int tileWidth = Game.tilePixels * xZoom;
 	private final int tileHeight = Game.tilePixels * yZoom;
 
@@ -54,7 +54,6 @@ public class Map {
 	 * @param yZoom
 	 */
 	public Map(File mapFile, Tiles tileSet, Sprite blockBackgroundSky, Sprite blockBackgroundGround, Sprite blockBackgroundStone, int mapWidthBlocks, int mapHeightBlocks, int xZoom, int yZoom) {
-		this.mapFile = mapFile;
 		this.tileSet = tileSet;
 		this.blockBackgroundSky = blockBackgroundSky;
 		this.blockBackgroundGround = blockBackgroundGround;
@@ -67,113 +66,7 @@ public class Map {
 		this.mapWidth = mapWidthBlocks * blockPixelWidth;
 		this.mapHeight = mapHeightBlocks * blockPixelHeight;
 
-		int minX = Integer.MAX_VALUE;
-		int minY = Integer.MAX_VALUE;
-		int maxX = Integer.MIN_VALUE;
-		int maxY = Integer.MIN_VALUE;
-
-		try {
-			Scanner s = new Scanner(mapFile);
-			mappedTiles = new ArrayList<>();
-
-			while(s.hasNextLine()) {
-				// read each line and create instances of tile
-				String line = s.nextLine();
-
-				// not comments 
-				if(!line.startsWith("//")) {
-
-					if(!line.startsWith("SEED") && !line.startsWith("SIZE")) {
-						String[] splitLine = line.split(",");
-						if(splitLine.length == 5) {
-							MappedTile mappedTile = new MappedTile(
-									// x
-									Integer.parseInt(splitLine[0].trim()), 
-									// y
-									Integer.parseInt(splitLine[1].trim()), 
-									// Layer
-									Integer.parseInt(splitLine[2].trim()),
-									// Rotation
-									Integer.parseInt(splitLine[3].trim()),
-									// TileID
-									Integer.parseInt(splitLine[4].trim()) );
-
-							if(mappedTile.getX() < minX)
-								minX = mappedTile.getX();
-							if(mappedTile.getY() < minY)
-								minY = mappedTile.getY();
-							if(mappedTile.getX() > maxX)
-								maxX = mappedTile.getX();
-							if(mappedTile.getY() > maxY)
-								maxY = mappedTile.getY();
-
-							if(numLayers <= mappedTile.layer)
-								numLayers = mappedTile.layer + 1;
-
-							mappedTiles.add(mappedTile);
-						}
-					}
-					else if(line.startsWith("SEED")){
-						String[] seed = line.split(":");
-						this.seed = Integer.parseInt(seed[1]);
-					}
-					else if(line.startsWith("SIZE")){
-						String[] size = line.split(":");
-						this.mapWidthBlocks = Integer.parseInt(size[1]);
-						this.mapHeightBlocks = Integer.parseInt(size[2]);
-					}
-
-				}
-				else {
-					// Do nothing for comments
-				}
-
-			}
-			s.close();
-
-			if(mappedTiles.size() == 0) {
-				minX = -blockWidth;
-				minY = -blockWidth;
-				maxX = blockWidth;
-				maxY = blockHeight;
-			}
-
-			blockStartX = minX;
-			blockStartY = minY;
-
-			blocks = new Block[mapWidthBlocks][mapHeightBlocks];
-
-			// Loop through all mappedTiles in level and add them to blocks
-			for(int i = 0; i < mappedTiles.size(); i++) {
-				MappedTile mappedTile = mappedTiles.get(i);
-
-				int blockX = (mappedTile.getX() - minX) / blockWidth;
-				int blockY = (mappedTile.getY() - minY) / blockHeight;
-
-				if(blocks[blockX][blockY] == null)
-					blocks[blockX][blockY] = new Block();
-
-				blocks[blockX][blockY].addTile(mappedTile);
-			}
-
-			// If world is empty
-			if(mappedTiles.isEmpty()) {
-				System.out.println("World is empty. Generating world!");
-
-				if(seed == 0) 
-					seed = (new Random()).nextInt();
-
-				generateWorld(mapWidthBlocks, mapHeightBlocks, seed);
-				//saveMap();
-			}
-			System.out.println(mapFile+ " loaded successfully!");
-
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-			System.out.println("Map failed to load!");
-		}
-
-
+		loadMap(mapFile);
 	}
 
 
@@ -181,7 +74,7 @@ public class Map {
 		Rectangle camera = renderer.getCamera();
 		Sprite blockBackground;
 
-		// values for blocks on edges of screen 
+		// Block values for screen boundries 
 		int topLeftX = camera.x/blockPixelWidth;
 		int topLeftY = camera.y/blockPixelHeight;
 		int bottomRightX = (camera.x + camera.width)/blockPixelWidth + 1;
@@ -282,6 +175,121 @@ public class Map {
 			mappedTiles.sort(new MappedTileComparator<MappedTile>());
 		}
 		
+	}
+	
+	
+	
+	
+	public void loadMap(File mapFile) {
+		int minX = Integer.MAX_VALUE;
+		int minY = Integer.MAX_VALUE;
+		int maxX = Integer.MIN_VALUE;
+		int maxY = Integer.MIN_VALUE;
+		
+		this.mapFile = mapFile;
+		
+		try {
+			Scanner s = new Scanner(mapFile);
+			mappedTiles = new ArrayList<>();
+
+			while(s.hasNextLine()) {
+				// read each line and create instances of tile
+				String line = s.nextLine();
+
+				// not comments 
+				if(!line.startsWith("//")) {
+
+					if(!line.startsWith("SEED") && !line.startsWith("SIZE")) {
+						String[] splitLine = line.split(",");
+						if(splitLine.length == 5) {
+							MappedTile mappedTile = new MappedTile(
+									// x
+									Integer.parseInt(splitLine[0].trim()), 
+									// y
+									Integer.parseInt(splitLine[1].trim()), 
+									// Layer
+									Integer.parseInt(splitLine[2].trim()),
+									// Rotation
+									Integer.parseInt(splitLine[3].trim()),
+									// TileID
+									Integer.parseInt(splitLine[4].trim()) );
+
+							if(mappedTile.getX() < minX)
+								minX = mappedTile.getX();
+							if(mappedTile.getY() < minY)
+								minY = mappedTile.getY();
+							if(mappedTile.getX() > maxX)
+								maxX = mappedTile.getX();
+							if(mappedTile.getY() > maxY)
+								maxY = mappedTile.getY();
+
+							if(numLayers <= mappedTile.layer)
+								numLayers = mappedTile.layer + 1;
+
+							mappedTiles.add(mappedTile);
+						}
+					}
+					else if(line.startsWith("SEED")){
+						String[] seed = line.split(":");
+						this.seed = Integer.parseInt(seed[1]);
+					}
+					else if(line.startsWith("SIZE")){
+						String[] size = line.split(":");
+						this.mapWidthBlocks = Integer.parseInt(size[1]);
+						this.mapHeightBlocks = Integer.parseInt(size[2]);
+					}
+
+				}
+				else {
+					// Do nothing for comments
+				}
+
+			}
+			s.close();
+
+			if(mappedTiles.size() == 0) {
+				minX = -blockWidth;
+				minY = -blockWidth;
+				maxX = blockWidth;
+				maxY = blockHeight;
+			}
+
+			blockStartX = minX;
+			blockStartY = minY;
+
+			blocks = new Block[mapWidthBlocks][mapHeightBlocks];
+
+			// Loop through all mappedTiles in level and add them to blocks
+			for(int i = 0; i < mappedTiles.size(); i++) {
+				MappedTile mappedTile = mappedTiles.get(i);
+
+				int blockX = (mappedTile.getX() - minX) / blockWidth;
+				int blockY = (mappedTile.getY() - minY) / blockHeight;
+
+				if(blocks[blockX][blockY] == null)
+					blocks[blockX][blockY] = new Block();
+
+				blocks[blockX][blockY].addTile(mappedTile);
+			}
+
+			// If world is empty
+			if(mappedTiles.isEmpty()) {
+				System.out.println("World is empty. Generating world!");
+
+				if(seed == 0) 
+					seed = (new Random()).nextInt();
+
+				generateWorld(mapWidthBlocks, mapHeightBlocks, seed);
+				//saveMap();
+				
+				//this(mapFile, tileSet, blockBackgroundSky, blockBackgroundGround, blockBackgroundStone, mapWidthBlocks, mapHeightBlocks, xZoom, yZoom);
+			}
+			System.out.println(mapFile+ " loaded successfully!");
+
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			System.out.println("Map failed to load!");
+		}
 	}
 
 
