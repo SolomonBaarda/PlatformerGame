@@ -30,8 +30,6 @@ public class Player implements GameObject {
 	private int speed = DEFAULT_SPEED;
 	private int jumpSpeed = 15;
 	private Vector2 velocity = new Vector2();
-	private final float GRAVITY = 0.5f;
-	private final float TERMINAL_VELOCITY = 10;
 
 	public Player(Sprite sprite, File playerFile, int xZoom, int yZoom, int xSpawnPos, int ySpawnPos) {
 
@@ -77,14 +75,14 @@ public class Player implements GameObject {
 				name = s.next();
 
 				health = s.nextInt();
-				
+
 				s.close();
 
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 				System.out.println("Failed to load player name.");
 			}
-			
+
 			hitbox = new Rectangle(xSpawnPos, ySpawnPos, sprite.getWidth(), sprite.getHeight());
 			hitbox.generateGraphics(1, 0xFF00FF90);
 
@@ -159,7 +157,7 @@ public class Player implements GameObject {
 				if(hitbox.y + game.yZoom * hitbox.height > tile.y && hitbox.y + game.yZoom * hitbox.height < tile.y + tile.height/2) {
 					yMin = tile.y - (game.yZoom * hitbox.height);
 					hitbox.y = yMin;
-					
+
 					onGround = true;
 				}
 
@@ -184,7 +182,7 @@ public class Player implements GameObject {
 					hitbox.x = tile.x - (hitbox.width * game.xZoom);
 				}
 
-				
+
 			}
 		}
 
@@ -195,7 +193,7 @@ public class Player implements GameObject {
 		// If in the air
 		else {
 			onGround = false;
-			
+
 			if(velocity.y < TERMINAL_VELOCITY)
 				velocity.y += GRAVITY;
 		}
@@ -204,13 +202,13 @@ public class Player implements GameObject {
 			velocity.y = 0;
 			velocity.x = 0;
 		}
-		
-		
-		
+
+
+
 		speed = DEFAULT_SPEED;
 		if(keyListener.shift())
 			speed = 7*DEFAULT_SPEED/4;
-		
+
 
 		// Read key inputs
 		// Face backwards

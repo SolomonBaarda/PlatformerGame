@@ -24,6 +24,7 @@ import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 import javax.imageio.ImageIO;
@@ -42,7 +43,7 @@ public class Game extends JFrame implements Runnable {
 	private RenderHandler renderer;
 
 	private int WIDTH, HEIGHT;
-	
+
 	public final int xZoom = 2;
 	public final int yZoom = 2;
 	public final static int tilePixels = 16;
@@ -59,7 +60,9 @@ public class Game extends JFrame implements Runnable {
 	private int selectedTileID = 0;
 	private int selectedLayer = 1;
 
-	private GameObject[] objects;
+	private int selectedGUI = 0;
+
+	private ArrayList<GameObject> objects;
 	private KeyboardListener keyListener = new KeyboardListener(this);
 	private MouseEventListener mouseListener = new MouseEventListener(this);
 
@@ -121,45 +124,53 @@ public class Game extends JFrame implements Runnable {
 		Sprite blockBackgroundSky = new Sprite(loadImage("/sprites/blockBackgroundSky.png"));
 		Sprite blockBackgroundGround = new Sprite(loadImage("/sprites/blockBackgroundGround.png"));
 		Sprite blockBackgroundStone = new Sprite(loadImage("/sprites/blockBackgroundStone.png"));
-		
+
 		int mapWidth = 16;
 		int mapHeight = 8;
 		map = new Map(mapFile, tiles, blockBackgroundSky, blockBackgroundGround, blockBackgroundStone, mapWidth, mapHeight, xZoom, yZoom);
 
 		// Load SDK GUI
-		GUIButton[] buttons = new GUIButton[tiles.size() + map.getNumLayers() + 1 + 10];
+		GUIButton[] SDKbuttons = new GUIButton[tiles.size() + map.getNumLayers() + 1];
 		Sprite[] tileSprites = tiles.getSprites();
 
 		// Tile buttons
 		for(int i = 0; i < tiles.size(); i++) {
 			Rectangle tileRectangle = new Rectangle(0, i*(tilePixels*xZoom + 2), tilePixels * xZoom, tilePixels * yZoom);
-			buttons[i] = new SDKButton(this, i , tileSprites[i], tileRectangle);
+			SDKbuttons[i] = new SDKButton(this, i , tileSprites[i], tileRectangle);
 		}
 
 		// Layer buttons 
 		for(int i = 0; i <= map.getNumLayers(); i++) {
 			Rectangle tileRectangle = new Rectangle(i*(tilePixels*xZoom + 2) + 50, 0, tilePixels * xZoom, tilePixels * yZoom);
-			buttons[tiles.size() + i] = new LayerButton(this, i, tileRectangle);
-		}
-		
-		// Hotbar buttons
-		for(int i = 0; i < 10; i++) {
-			Rectangle tileRectangle = new Rectangle(renderer.getCamera().width / 4 + i * 60, renderer.getCamera().height - 75, 50, 50);
-			buttons[tiles.size() + map.getNumLayers() + 1 + i] = new HotbarButton(this, null, tileRectangle);
+			SDKbuttons[tiles.size() + i] = new LayerButton(this, i, tileRectangle);
 		}
 
 		// Create GUI
-		GUI gui = new GUI(buttons, 5, 5, true);
-
+		GUI sdk = new GUI(SDKbuttons, 5, 5, true);
+		
+		GUIButton[] hotbarButtons = new GUIButton[10];
+		
+		// Hotbar buttons
+		for(int i = 0; i < hotbarButtons.length; i++) {
+			Rectangle tileRectangle = new Rectangle(renderer.getCamera().width / 4 + i * 60, renderer.getCamera().height - 75, 50, 50);
+			hotbarButtons[i] = new HotbarButton(this, null, tileRectangle);
+		}
+		
+		Hotbar hotbar = new Hotbar(this, hotbarButtons, 100, 700);
+		
+		
+		
 		// LOAD OBJECTS
 		// Create gameObjects array
-		objects = new GameObject[2];
+		objects = new ArrayList<>();
 		// Create Player
 		player = new Player(playerAnimation, new File("./players/Player.txt"), xZoom, yZoom, mapWidth*8*16/2, mapHeight*8*16/4);
 		// Add player to gameObjects
-		objects[0] = player;
-		// Add GUI to gameObjects
-		objects[1] = gui;
+		objects.add(player);
+		// Add SDK to gameObjects
+		objects.add(sdk);
+		// Add hotbar to gameObjects
+		objects.add(hotbar);
 
 		// Add listeners 
 		canvas.addKeyListener(keyListener);
@@ -272,8 +283,8 @@ public class Game extends JFrame implements Runnable {
 
 	public void update() {
 		// Update all GameObjects
-		for(int i = 0; i < objects.length; i++)
-			objects[i].update(this);
+		for(int i = 0; i < objects.size(); i++)
+			objects.get(i).update(this);
 
 	}
 
@@ -305,13 +316,8 @@ public class Game extends JFrame implements Runnable {
 		Graphics graphics = bufferStrategy.getDrawGraphics();
 		super.paint(graphics);
 
-
 		// Render the map
 		map.render(renderer, objects, xZoom, yZoom);
-
-		// Update all GameObjects
-		//		for(int i = 0; i < objects.length; i++)
-		//			objects[i].render(renderer, xZoom, yZoom);
 
 		renderer.render(graphics);
 
@@ -348,9 +354,9 @@ public class Game extends JFrame implements Runnable {
 		Rectangle mouseRectangle = new Rectangle(x, y, 1, 1);
 		boolean stoppedChecking = false;
 
-		for(int i = 0; i < objects.length; i++) 
+		for(int i = 0; i < objects.size(); i++) 
 			if(!stoppedChecking)
-				stoppedChecking = objects[i].handleMouseClick(mouseRectangle, renderer.getCamera(), xZoom, yZoom);
+				stoppedChecking = objects.get(i).handleMouseClick(mouseRectangle, renderer.getCamera(), xZoom, yZoom);
 
 		if(!stoppedChecking) {
 			int xTile = (int) Math.floor( (x + renderer.getCamera().getX()) / (16.0 * xZoom) );
@@ -376,6 +382,19 @@ public class Game extends JFrame implements Runnable {
 	}
 
 
+
+
+
+
+	public ArrayList<GameObject> getObjects() {
+		return objects;
+	}
+
+
+
+	public void setSelectedGUI(int selectedGUI) {
+		this.selectedGUI = selectedGUI;
+	}
 
 
 

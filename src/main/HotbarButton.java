@@ -32,9 +32,7 @@ public class HotbarButton extends GUIButton {
 
 	@Override
 	public void update(Game game) {
-
-
-
+		game.setSelectedGUI(2);
 	}
 
 

@@ -33,6 +33,7 @@ public class SDKButton extends GUIButton {
 			if(!isSelected) {
 				rectangle.generateGraphics(0);
 				isSelected = true;
+				game.setSelectedGUI(1);
 			}
 
 		}

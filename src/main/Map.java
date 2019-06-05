@@ -26,8 +26,8 @@ public class Map {
 	// zoom 3 by default, gets updated when constructor called
 	private int xZoom = 2;
 	private int yZoom = 2;
-	private final int tileWidth = Game.tilePixels * xZoom;
-	private final int tileHeight = Game.tilePixels * yZoom;
+	final int tileWidth = Game.tilePixels * xZoom;
+	final int tileHeight = Game.tilePixels * yZoom;
 
 	private final int blockWidth = 8; 
 	private final int blockHeight = 8; 
@@ -70,7 +70,7 @@ public class Map {
 	}
 
 
-	public void render(RenderHandler renderer, GameObject[] objects, int xZoom, int yZoom) {
+	public void render(RenderHandler renderer, ArrayList<GameObject> objects, int xZoom, int yZoom) {
 		Rectangle camera = renderer.getCamera();
 		Sprite blockBackground;
 
@@ -115,15 +115,15 @@ public class Map {
 							blocks[blockX][blockY].render(renderer, layer, tileWidth, tileHeight, xZoom, yZoom);
 
 			// Render game objects
-			for(int i = 0; i < objects.length; i++) 
-				if(objects[i].getLayer() == layer)
-					objects[i].render(renderer, xZoom, yZoom);
+			for(int i = 0; i < objects.size(); i++) 
+				if(objects.get(i).getLayer() == layer)
+					objects.get(i).render(renderer, xZoom, yZoom);
 
 		}
 		// Render objects at front - eg hud etc
-		for(int i = 0; i < objects.length; i++) 
-			if(objects[i].getLayer() == Integer.MAX_VALUE)
-				objects[i].render(renderer, xZoom, yZoom);
+		for(int i = 0; i < objects.size(); i++) 
+			if(objects.get(i).getLayer() == Integer.MAX_VALUE)
+				objects.get(i).render(renderer, xZoom, yZoom);
 
 	}
 

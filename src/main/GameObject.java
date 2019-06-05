@@ -1,6 +1,9 @@
 package main;
 
 public interface GameObject {
+	
+	public final float GRAVITY = 0.5f;
+	public final float TERMINAL_VELOCITY = 10;
 
 	// Call as much as possible
 	void render(RenderHandler renderer, int xZoom, int yZoom);
