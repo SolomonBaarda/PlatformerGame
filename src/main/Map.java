@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.LinkedList;
 import java.util.Random;
 import java.util.Scanner;
 
@@ -278,11 +277,11 @@ public class Map {
 
 				if(seed == 0) 
 					seed = (new Random()).nextInt();
-
-				generateWorld(mapWidthBlocks, mapHeightBlocks, seed);
-				//saveMap();
 				
-				//this(mapFile, tileSet, blockBackgroundSky, blockBackgroundGround, blockBackgroundStone, mapWidthBlocks, mapHeightBlocks, xZoom, yZoom);
+				generateWorld(mapWidthBlocks, mapHeightBlocks, seed);
+				saveMap();
+				
+				loadMap(mapFile);
 			}
 			System.out.println(mapFile+ " loaded successfully!");
 
